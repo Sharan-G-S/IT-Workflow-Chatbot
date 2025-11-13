@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - IT Workflow Chatbot</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="dashboard">
+  <nav class="navbar">
+    <div class="navbar-content">
+      <div class="navbar-brand">🤖 IT Workflow Assistant</div>
+      <div class="navbar-user">
+        <span id="userName">Loading...</span>
+        <button class="btn btn-sm btn-secondary" onclick="logout()">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
+      <h2 style="margin: 0 0 10px 0; color: white;">🚀 Try Enhanced Conversational AI Chat!</h2>
+      <p style="margin: 0 0 15px 0; opacity: 0.9;">Experience natural conversations with intent detection, conversation history, and smart suggestions</p>
+      <a href="/chat.html" class="btn btn-sm" style="background: white; color: #667eea;">Open Enhanced Chat →</a>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('chat')">AI Chat</button>
+      <button class="tab" onclick="switchTab('tickets')">Tickets</button>
+      <button class="tab" onclick="switchTab('access')">Access Requests</button>
+      <button class="tab" onclick="switchTab('onboarding')">Onboarding</button>
+    </div>
+
+    <!-- AI Chat Tab -->
+    <div id="chatTab" class="tab-content">
+      <div class="card">
+        <h2>AI-Powered Workflow Assistant</h2>
+        <p>Ask for help with tickets, access requests, or onboarding. The AI will automatically take action!</p>
+        
+        <div class="grid" style="margin-top:20px;">
+          <div class="card" style="background:#e3f2fd; border:2px solid #2196f3;">
+            <h3 style="color:#1976d2;">🎫 Need Access?</h3>
+            <p style="font-size:14px; color:#555;">Say: "I need access to Figma" and the bot will create an access request for you.</p>
+          </div>
+          <div class="card" style="background:#fff3e0; border:2px solid #ff9800;">
+            <h3 style="color:#f57c00;">👥 Onboarding</h3>
+            <p style="font-size:14px; color:#555;">Say: "Show onboarding checklist for new hire" to retrieve checklists.</p>
+          </div>
+          <div class="card" style="background:#e8f5e9; border:2px solid #4caf50;">
+            <h3 style="color:#388e3c;">📋 View Tickets</h3>
+            <p style="font-size:14px; color:#555;">Say: "Show open tickets from this week" to fetch data.</p>
+          </div>
+        </div>
+
+        <div class="chat-interface">
+          <div class="form-group">
+            <label for="chatType">Choose Action Type</label>
+            <select id="chatType" class="form-control">
+              <option value="access">Request Access (creates access request)</option>
+              <option value="onboarding">Onboarding Info (retrieves checklists)</option>
+              <option value="tickets">View Tickets (IT staff)</option>
+            </select>
+          </div>
+          
+          <div class="chat-messages" id="chatMessages"></div>
+          
+          <div class="chat-input-group">
+            <textarea id="chatInput" placeholder="Type your message here..." rows="3"></textarea>
+            <button class="btn btn-primary" onclick="sendMessage()">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tickets Tab -->
+    <div id="ticketsTab" class="tab-content" style="display:none;">
+      <div class="card">
+        <h2>IT Tickets</h2>
+        <button class="btn btn-success btn-sm" onclick="showCreateTicket()" style="float:right; margin-top:-40px;">+ New Ticket</button>
+        
+        <div id="createTicketForm" style="display:none; margin-top:20px; padding:20px; border:2px dashed #ddd; border-radius:8px;">
+          <h3>Create New Ticket</h3>
+          <div class="form-group">
+            <label>Title</label>
+            <input type="text" id="ticketTitle" placeholder="Brief issue description">
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <textarea id="ticketDesc" rows="3" placeholder="Detailed description"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Priority</label>
+            <select id="ticketPriority">
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="createTicket()">Submit Ticket</button>
+          <button class="btn btn-secondary" onclick="document.getElementById('createTicketForm').style.display='none'">Cancel</button>
+        </div>
+        
+        <div id="ticketsList" style="margin-top:20px;"></div>
+      </div>
+    </div>
+
+    <!-- Access Requests Tab -->
+    <div id="accessTab" class="tab-content" style="display:none;">
+      <div class="card">
+        <h2>Access Requests</h2>
+        <button class="btn btn-success btn-sm" onclick="showCreateAccess()" style="float:right; margin-top:-40px;">+ New Request</button>
+        
+        <div id="createAccessForm" style="display:none; margin-top:20px; padding:20px; border:2px dashed #ddd; border-radius:8px;">
+          <h3>Request Access</h3>
+          <div class="form-group">
+            <label>Resource Name</label>
+            <input type="text" id="accessResource" placeholder="e.g., Figma, GitHub, AWS">
+          </div>
+          <div class="form-group">
+            <label>Access Type</label>
+            <select id="accessType">
+              <option value="read">Read</option>
+              <option value="write">Write</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Justification</label>
+            <textarea id="accessJustification" rows="3" placeholder="Why do you need this access?"></textarea>
+          </div>
+          <button class="btn btn-primary" onclick="createAccessRequest()">Submit Request</button>
+          <button class="btn btn-secondary" onclick="document.getElementById('createAccessForm').style.display='none'">Cancel</button>
+        </div>
+        
+        <div id="accessList" style="margin-top:20px;"></div>
+      </div>
+    </div>
+
+    <!-- Onboarding Tab -->
+    <div id="onboardingTab" class="tab-content" style="display:none;">
+      <div class="card">
+        <h2>Onboarding Checklists</h2>
+        <button class="btn btn-success btn-sm" onclick="showCreateOnboarding()" style="float:right; margin-top:-40px;">+ New Checklist</button>
+        
+        <div id="createOnboardingForm" style="display:none; margin-top:20px; padding:20px; border:2px dashed #ddd; border-radius:8px;">
+          <h3>Create Onboarding Checklist</h3>
+          <div class="form-group">
+            <label>Employee Name</label>
+            <input type="text" id="onboardingName" placeholder="New hire name">
+          </div>
+          <div class="form-group">
+            <label>Role</label>
+            <input type="text" id="onboardingRole" placeholder="e.g., Software Engineer">
+          </div>
+          <div class="form-group">
+            <label>Checklist Items (one per line)</label>
+            <textarea id="onboardingItems" rows="4" placeholder="Setup workstation&#10;Create email account&#10;Assign mentor&#10;Schedule training"></textarea>
+          </div>
+          <button class="btn btn-primary" onclick="createOnboarding()">Create Checklist</button>
+          <button class="btn btn-secondary" onclick="document.getElementById('createOnboardingForm').style.display='none'">Cancel</button>
+        </div>
+        
+        <div id="onboardingList" style="margin-top:20px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentUser = null;
+
+    async function checkAuth() {
+      try {
+        const res = await fetch('/api/auth/me', { credentials: 'include' });
+        if (!res.ok) {
+          window.location.href = '/login.html';
+          return;
+        }
+        const data = await res.json();
+        currentUser = data.user;
+        document.getElementById('userName').textContent = data.user.full_name || data.user.email;
+      } catch (err) {
+        window.location.href = '/login.html';
+      }
+    }
+
+    async function logout() {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+      window.location.href = '/login.html';
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+      event.target.classList.add('active');
+      document.getElementById(tab + 'Tab').style.display = 'block';
+      
+      if (tab === 'tickets') loadTickets();
+      if (tab === 'access') loadAccessRequests();
+      if (tab === 'onboarding') loadOnboarding();
+    }
+
+    // Chat functions
+    async function sendMessage() {
+      const input = document.getElementById('chatInput');
+      const type = document.getElementById('chatType').value;
+      const message = input.value.trim();
+      if (!message) return;
+
+      addMessage(message, 'user');
+      input.value = '';
+
+      try {
+        const endpoint = `/api/chat/${type}`;
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ message })
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok) {
+          let responseText = data.aiResponse;
+          if (data.action === 'access_request_created') {
+            responseText += `\n\n✅ Access request created! Request ID: ${data.requestId} for ${data.resourceName}`;
+          } else if (data.action === 'tickets_retrieved') {
+            responseText += `\n\n📋 Found ${data.tickets.length} ticket(s)`;
+          } else if (data.action === 'onboarding_info_retrieved') {
+            responseText += `\n\n👥 Found ${data.existingChecklists.length} checklist(s)`;
+          }
+          addMessage(responseText, 'bot');
+        } else {
+          addMessage('Error: ' + (data.error || 'Unknown error'), 'bot');
+        }
+      } catch (err) {
+        addMessage('Network error. Please try again.', 'bot');
+      }
+    }
+
+    function addMessage(text, sender) {
+      const div = document.createElement('div');
+      div.className = `message message-${sender}`;
+      div.textContent = text;
+      document.getElementById('chatMessages').appendChild(div);
+      div.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Ticket functions
+    function showCreateTicket() {
+      document.getElementById('createTicketForm').style.display = 'block';
+    }
+
+    async function createTicket() {
+      const title = document.getElementById('ticketTitle').value;
+      const description = document.getElementById('ticketDesc').value;
+      const priority = document.getElementById('ticketPriority').value;
+      
+      if (!title) return alert('Title required');
+      
+      try {
+        const res = await fetch('/api/tickets', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ title, description, priority })
+        });
+        
+        if (res.ok) {
+          alert('Ticket created!');
+          document.getElementById('createTicketForm').style.display = 'none';
+          document.getElementById('ticketTitle').value = '';
+          document.getElementById('ticketDesc').value = '';
+          loadTickets();
+        }
+      } catch (err) {
+        alert('Error creating ticket');
+      }
+    }
+
+    async function loadTickets() {
+      try {
+        const res = await fetch('/api/tickets', { credentials: 'include' });
+        const data = await res.json();
+        const list = document.getElementById('ticketsList');
+        
+        if (data.tickets.length === 0) {
+          list.innerHTML = '<div class="empty-state">No tickets found</div>';
+          return;
+        }
+        
+        list.innerHTML = data.tickets.map(t => `
+          <div class="list-item">
+            <div class="list-item-header">
+              <div>
+                <div class="list-item-title">${t.title}</div>
+                <div class="list-item-meta">${new Date(t.created_at).toLocaleString()}</div>
+              </div>
+              <div>
+                <span class="badge badge-${t.status}">${t.status}</span>
+                <span class="badge badge-${t.priority}">${t.priority}</span>
+              </div>
+            </div>
+            <p style="margin-top:8px; color:#666;">${t.description || 'No description'}</p>
+          </div>
+        `).join('');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Access request functions
+    function showCreateAccess() {
+      document.getElementById('createAccessForm').style.display = 'block';
+    }
+
+    async function createAccessRequest() {
+      const resourceName = document.getElementById('accessResource').value;
+      const accessType = document.getElementById('accessType').value;
+      const justification = document.getElementById('accessJustification').value;
+      
+      if (!resourceName) return alert('Resource name required');
+      
+      try {
+        const res = await fetch('/api/access-requests', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ resourceName, accessType, justification })
+        });
+        
+        if (res.ok) {
+          alert('Access request created!');
+          document.getElementById('createAccessForm').style.display = 'none';
+          document.getElementById('accessResource').value = '';
+          document.getElementById('accessJustification').value = '';
+          loadAccessRequests();
+        }
+      } catch (err) {
+        alert('Error creating request');
+      }
+    }
+
+    async function loadAccessRequests() {
+      try {
+        const res = await fetch('/api/access-requests', { credentials: 'include' });
+        const data = await res.json();
+        const list = document.getElementById('accessList');
+        
+        if (data.requests.length === 0) {
+          list.innerHTML = '<div class="empty-state">No access requests found</div>';
+          return;
+        }
+        
+        list.innerHTML = data.requests.map(r => `
+          <div class="list-item">
+            <div class="list-item-header">
+              <div>
+                <div class="list-item-title">${r.resource_name} (${r.access_type})</div>
+                <div class="list-item-meta">${new Date(r.created_at).toLocaleString()}</div>
+              </div>
+              <span class="badge badge-${r.status}">${r.status}</span>
+            </div>
+            <p style="margin-top:8px; color:#666;">${r.justification || 'No justification'}</p>
+          </div>
+        `).join('');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Onboarding functions
+    function showCreateOnboarding() {
+      document.getElementById('createOnboardingForm').style.display = 'block';
+    }
+
+    async function createOnboarding() {
+      const employeeName = document.getElementById('onboardingName').value;
+      const role = document.getElementById('onboardingRole').value;
+      const items = document.getElementById('onboardingItems').value.split('\n').filter(x => x.trim());
+      
+      if (!employeeName) return alert('Employee name required');
+      
+      try {
+        const res = await fetch('/api/onboarding', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ employeeName, role, checklistItems: items })
+        });
+        
+        if (res.ok) {
+          alert('Onboarding checklist created!');
+          document.getElementById('createOnboardingForm').style.display = 'none';
+          document.getElementById('onboardingName').value = '';
+          document.getElementById('onboardingRole').value = '';
+          document.getElementById('onboardingItems').value = '';
+          loadOnboarding();
+        }
+      } catch (err) {
+        alert('Error creating checklist');
+      }
+    }
+
+    async function loadOnboarding() {
+      try {
+        const res = await fetch('/api/onboarding', { credentials: 'include' });
+        const data = await res.json();
+        const list = document.getElementById('onboardingList');
+        
+        if (data.checklists.length === 0) {
+          list.innerHTML = '<div class="empty-state">No onboarding checklists found</div>';
+          return;
+        }
+        
+        list.innerHTML = data.checklists.map(c => `
+          <div class="list-item">
+            <div class="list-item-header">
+              <div>
+                <div class="list-item-title">${c.employee_name} - ${c.role || 'No role'}</div>
+                <div class="list-item-meta">${new Date(c.created_at).toLocaleString()}</div>
+              </div>
+              <span class="badge badge-${c.status}">${c.status}</span>
+            </div>
+            <div style="margin-top:12px;">
+              <strong>Checklist:</strong>
+              <ul style="margin-top:8px; padding-left:20px;">
+                ${c.checklist_items.map(item => `<li>${item}</li>`).join('')}
+              </ul>
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Initialize
+    checkAuth();
+  </script>
+</body>
+</html>
