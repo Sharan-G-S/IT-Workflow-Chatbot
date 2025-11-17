@@ -26,9 +26,17 @@ const conversationService = require('./src/conversationService');
 const intentDetector = require('./src/intentDetector');
 const { PromptManager } = require('./src/promptManager');
 const { SimpleCache } = require('./src/simpleCache');
+const { RedisCache } = require('./src/redisCache');
+const { WebSocketService } = require('./src/websocketService');
+const { EmailService } = require('./src/emailService');
+const { SearchService } = require('./src/searchService');
+const { AnalyticsService } = require('./src/analyticsService');
+const { ExternalIntegrationsService } = require('./src/externalIntegrationsService');
 const agentService = require('./src/agentService');
 const notificationService = require('./src/notificationService');
 const AgentTriageRouter = require('./src/agents/AgentTriageRouter');
+const http = require('http');
+const RedisStore = require('connect-redis').default;
 
 const app = express();
 app.use(cors({ origin: true, credentials: true }));
@@ -51,8 +59,81 @@ if (HAS_OPENAI) {
 } else {
   console.warn('[WARN] OPENAI_API_KEY not set. Running in fallback mode with deterministic responses.');
 }
-const cache = new SimpleCache({ maxEntries: 200 });
+// Initialize enhanced services
+let cache = new SimpleCache({ maxEntries: 200 }); // Fallback cache
+let redisCache = null;
+let websocketService = null;
+let emailService = null;
+let searchService = null;
+let analyticsService = null;
+let integrationsService = null;
 const prompts = new PromptManager();
+
+// Initialize Redis cache if available
+try {
+  redisCache = new RedisCache();
+  redisCache.connect().then(connected => {
+    if (connected) {
+      cache = redisCache; // Use Redis as primary cache
+      console.log('[CACHE] Using Redis for persistent caching');
+    } else {
+      console.log('[CACHE] Redis unavailable, using in-memory cache');
+    }
+  });
+} catch (error) {
+  console.warn('[CACHE] Redis initialization failed, using in-memory cache:', error.message);
+}
+
+// Create HTTP server for Socket.IO
+const server = http.createServer(app);
+
+// Initialize WebSocket service
+try {
+  websocketService = new WebSocketService(server);
+  console.log('[WEBSOCKET] Real-time service initialized');
+} catch (error) {
+  console.error('[WEBSOCKET] Failed to initialize:', error.message);
+}
+
+// Initialize email service
+try {
+  emailService = new EmailService();
+  console.log('[EMAIL] Notification service initialized');
+} catch (error) {
+  console.error('[EMAIL] Failed to initialize:', error.message);
+}
+
+// Initialize other services after database is ready
+setTimeout(async () => {
+  try {
+    // Get database instance (assuming it's available from one of the services)
+    const db = require('./src/database');
+    
+    // Initialize search service
+    searchService = new SearchService(db);
+    console.log('[SEARCH] Advanced search service initialized');
+    
+    // Initialize analytics service
+    analyticsService = new AnalyticsService(db);
+    console.log('[ANALYTICS] Analytics service initialized');
+    
+    // Initialize external integrations
+    integrationsService = new ExternalIntegrationsService(db, {
+      jira: {
+        enabled: process.env.JIRA_ENABLED === 'true'
+      },
+      servicenow: {
+        enabled: process.env.SERVICENOW_ENABLED === 'true'
+      },
+      sync: {
+        enabled: process.env.SYNC_ENABLED === 'true'
+      }
+    });
+    console.log('[INTEGRATIONS] External systems service initialized');
+  } catch (error) {
+    console.error('[SERVICES] Failed to initialize enhanced services:', error.message);
+  }
+}, 1000);
 
 // Initialize LangChain Agent Router
 let agentRouter = null;
@@ -874,13 +955,296 @@ function sendEscalationNotification(ticket) {
   }
 }
 
-app.listen(port, () => {
+// ============ ENHANCED FEATURES ENDPOINTS ============
+
+// Advanced Search API
+app.post('/api/search/universal', requireAuth, async (req, res) => {
+  if (!searchService) return res.status(503).json({ error: 'Search service not available' });
+  
+  const { query, entities, filters = {}, pagination = {} } = req.body;
+  if (!query) return res.status(400).json({ error: 'Search query required' });
+  
+  try {
+    const options = {
+      ...filters,
+      ...pagination,
+      userId: req.session.userId,
+      userRole: req.session.userRole || 'employee'
+    };
+    
+    const results = await searchService.universalSearch(query, { entities, ...options });
+    res.json(results);
+  } catch (error) {
+    console.error('[API] Search error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/search/suggestions', requireAuth, async (req, res) => {
+  if (!searchService) return res.status(503).json({ error: 'Search service not available' });
+  
+  const { q: query, entity = 'all', limit = 5 } = req.query;
+  
+  try {
+    const suggestions = await searchService.getSearchSuggestions(query, entity, parseInt(limit));
+    res.json({ suggestions });
+  } catch (error) {
+    console.error('[API] Search suggestions error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/search/filters/:entity', requireAuth, async (req, res) => {
+  if (!searchService) return res.status(503).json({ error: 'Search service not available' });
+  
+  const { entity } = req.params;
+  const userRole = req.session.userRole || 'employee';
+  
+  try {
+    const filters = await searchService.getFilterOptions(entity, userRole);
+    res.json({ filters });
+  } catch (error) {
+    console.error('[API] Filter options error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Analytics API
+app.get('/api/analytics/dashboard', requireAuth, async (req, res) => {
+  if (!analyticsService) return res.status(503).json({ error: 'Analytics service not available' });
+  
+  const { timeRange = '30d' } = req.query;
+  const userRole = req.session.userRole || 'employee';
+  const userId = req.session.userId;
+  
+  try {
+    const analytics = await analyticsService.getDashboardAnalytics(userRole, userId, timeRange);
+    res.json(analytics);
+  } catch (error) {
+    console.error('[API] Analytics error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/analytics/trends', requireAuth, async (req, res) => {
+  if (!analyticsService) return res.status(503).json({ error: 'Analytics service not available' });
+  
+  const { timeRange = '30d' } = req.query;
+  const userRole = req.session.userRole || 'employee';
+  const userId = req.session.userId;
+  
+  try {
+    const trends = await analyticsService.getTrendAnalytics(userRole, userId, timeRange);
+    res.json({ trends });
+  } catch (error) {
+    console.error('[API] Trends error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/analytics/realtime', requireAuth, async (req, res) => {
+  if (!analyticsService) return res.status(503).json({ error: 'Analytics service not available' });
+  
+  try {
+    const stats = await analyticsService.getRealtimeStats();
+    res.json(stats);
+  } catch (error) {
+    console.error('[API] Realtime stats error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// External Integrations API
+app.get('/api/integrations/status', requireAuth, async (req, res) => {
+  if (!integrationsService) return res.status(503).json({ error: 'Integrations service not available' });
+  
+  // Only admin users can view integration status
+  if (req.session.userRole !== 'admin') {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+  
+  try {
+    const status = await integrationsService.getIntegrationStatus();
+    res.json(status);
+  } catch (error) {
+    console.error('[API] Integration status error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/integrations/sync/:ticketId', requireAuth, async (req, res) => {
+  if (!integrationsService) return res.status(503).json({ error: 'Integrations service not available' });
+  
+  const { ticketId } = req.params;
+  
+  // Only IT staff and admin can force sync
+  if (!['admin', 'it_staff'].includes(req.session.userRole)) {
+    return res.status(403).json({ error: 'IT staff access required' });
+  }
+  
+  try {
+    const result = await integrationsService.forceSyncTicket(parseInt(ticketId));
+    res.json(result);
+  } catch (error) {
+    console.error('[API] Force sync error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/integrations/logs', requireAuth, async (req, res) => {
+  if (!integrationsService) return res.status(503).json({ error: 'Integrations service not available' });
+  
+  const { limit = 50, system } = req.query;
+  
+  // Only admin users can view integration logs
+  if (req.session.userRole !== 'admin') {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+  
+  try {
+    const logs = await integrationsService.getSyncLogs(parseInt(limit), system);
+    res.json({ logs });
+  } catch (error) {
+    console.error('[API] Integration logs error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Email Service API
+app.get('/api/email/stats', requireAuth, async (req, res) => {
+  if (!emailService) return res.status(503).json({ error: 'Email service not available' });
+  
+  // Only admin users can view email stats
+  if (req.session.userRole !== 'admin') {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+  
+  try {
+    const stats = emailService.getStats();
+    res.json(stats);
+  } catch (error) {
+    console.error('[API] Email stats error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/email/test', requireAuth, async (req, res) => {
+  if (!emailService) return res.status(503).json({ error: 'Email service not available' });
+  
+  // Only admin users can test email
+  if (req.session.userRole !== 'admin') {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+  
+  try {
+    const result = await emailService.testConnection();
+    res.json(result);
+  } catch (error) {
+    console.error('[API] Email test error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// WebSocket Stats API
+app.get('/api/websocket/stats', requireAuth, async (req, res) => {
+  if (!websocketService) return res.status(503).json({ error: 'WebSocket service not available' });
+  
+  try {
+    const stats = websocketService.getStats();
+    const connectedUsers = websocketService.getConnectedUsers();
+    res.json({ stats, connectedUsers });
+  } catch (error) {
+    console.error('[API] WebSocket stats error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Cache Management API
+app.get('/api/cache/stats', requireAuth, async (req, res) => {
+  // Only admin users can view cache stats
+  if (req.session.userRole !== 'admin') {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+  
+  try {
+    const stats = await cache.getStats();
+    res.json(stats);
+  } catch (error) {
+    console.error('[API] Cache stats error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/cache/clear', requireAuth, async (req, res) => {
+  // Only admin users can clear cache
+  if (req.session.userRole !== 'admin') {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+  
+  try {
+    await cache.clear();
+    res.json({ success: true, message: 'Cache cleared successfully' });
+  } catch (error) {
+    console.error('[API] Cache clear error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Enhanced ticket creation with integrations and notifications
+const originalTicketCreate = app.post;
+app.post('/api/tickets', requireAuth, async (req, res) => {
+  try {
+    const { title, description, priority = 'medium', category } = req.body;
+    if (!title) return res.status(400).json({ error: 'Title required' });
+
+    const ticket = await ticketService.createTicket({
+      title: title.trim(),
+      description: description?.trim() || '',
+      priority,
+      category,
+      user_id: req.session.userId
+    });
+
+    // Send real-time notification
+    if (websocketService) {
+      websocketService.notifyTicketCreated(ticket, req.session.userId);
+    }
+
+    // Send email notification
+    if (emailService && req.session.userEmail) {
+      emailService.sendTicketCreatedEmail(ticket, req.session.userEmail);
+    }
+
+    // Sync to external systems
+    if (integrationsService) {
+      setTimeout(() => {
+        integrationsService.syncTicketToExternalSystems(ticket).catch(err => {
+          console.error('[SYNC] Failed to sync ticket to external systems:', err);
+        });
+      }, 1000);
+    }
+
+    res.json(ticket);
+  } catch (error) {
+    console.error('[API] Enhanced ticket creation error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+server.listen(port, () => {
   console.log('Server running on', port);
   console.log('[AUTOMATION] Advanced features enabled:');
   console.log('  ✓ Auto Ticket Generation');
   console.log('  ✓ Low-Risk Access Auto-Approval');
   console.log('  ✓ SLA Monitoring & Escalation');
   console.log('  ✓ Onboarding Cadence Reminders');
+  console.log('[ENHANCED] New features available:');
+  console.log('  ✓ Redis Persistent Cache');
+  console.log('  ✓ WebSocket Real-time Updates');
+  console.log('  ✓ Email Notifications');
+  console.log('  ✓ Advanced Search & Filtering');
+  console.log('  ✓ Analytics Dashboard');
+  console.log('  ✓ External System Integrations');
 });
 
 // ============ LANGCHAIN AGENT ENDPOINTS ============

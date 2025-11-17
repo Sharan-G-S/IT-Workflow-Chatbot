@@ -504,6 +504,63 @@
       gap: 1.5rem;
     }
 
+    .integration-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      transition: all 0.3s ease;
+    }
+
+    .integration-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .integration-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .integration-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.25rem;
+    }
+
+    .integration-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--dark);
+    }
+
+    .integration-status {
+      font-size: 0.9rem;
+      margin-top: 0.25rem;
+    }
+
+    .integration-stats {
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+      color: var(--secondary);
+    }
+
+    .search-result-card {
+      transition: all 0.3s ease;
+    }
+
+    .search-result-card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
     .feature-card {
       background: rgba(255, 255, 255, 0.95);
       border-radius: 15px;
@@ -605,6 +662,24 @@
         <a href="#" class="sidebar-link" onclick="switchTab('hr-portal')">
           <i class="fas fa-users"></i>
           <span>HR Portal</span>
+        </a>
+      </li>
+      <li class="sidebar-item">
+        <a href="/analytics.html" class="sidebar-link">
+          <i class="fas fa-chart-bar"></i>
+          <span>Analytics Dashboard</span>
+        </a>
+      </li>
+      <li class="sidebar-item">
+        <a href="#" class="sidebar-link" onclick="switchTab('search')">
+          <i class="fas fa-search"></i>
+          <span>Advanced Search</span>
+        </a>
+      </li>
+      <li class="sidebar-item">
+        <a href="#" class="sidebar-link" onclick="switchTab('integrations')">
+          <i class="fas fa-plug"></i>
+          <span>Integrations</span>
         </a>
       </li>
       <li class="sidebar-item">
@@ -981,6 +1056,183 @@
         <div id="hrDetailedReports"></div>
       </div>
     </div>
+
+    <!-- Advanced Search Tab -->
+    <div id="searchTab" class="tab-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h2><i class="fas fa-search"></i> Advanced Search</h2>
+        <button class="btn btn-primary" onclick="clearSearch()">
+          <i class="fas fa-eraser"></i> Clear Results
+        </button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Universal Search</label>
+        <div style="display: flex; gap: 1rem;">
+          <input type="text" id="searchQuery" class="form-control" placeholder="Search across tickets, access requests, onboarding, and more...">
+          <select id="searchType" class="form-control" style="max-width: 200px;">
+            <option value="all">All Items</option>
+            <option value="tickets">Tickets Only</option>
+            <option value="access">Access Requests</option>
+            <option value="onboarding">Onboarding</option>
+            <option value="users">Users</option>
+          </select>
+          <button class="btn btn-primary" onclick="performSearch()">
+            <i class="fas fa-search"></i> Search
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Advanced Filters</label>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+          <select id="statusFilter" class="form-control">
+            <option value="">Any Status</option>
+            <option value="open">Open</option>
+            <option value="pending">Pending</option>
+            <option value="resolved">Resolved</option>
+            <option value="closed">Closed</option>
+          </select>
+          <select id="priorityFilter" class="form-control">
+            <option value="">Any Priority</option>
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+            <option value="urgent">Urgent</option>
+          </select>
+          <input type="date" id="dateFromFilter" class="form-control" title="Date From">
+          <input type="date" id="dateToFilter" class="form-control" title="Date To">
+        </div>
+      </div>
+
+      <div id="searchResults">
+        <div style="text-align: center; color: var(--secondary); padding: 2rem;">
+          <i class="fas fa-search" style="font-size: 3rem; opacity: 0.3;"></i>
+          <p>Enter your search query above to find tickets, access requests, and more</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Integrations Tab -->
+    <div id="integrationsTab" class="tab-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h2><i class="fas fa-plug"></i> External Integrations</h2>
+        <button class="btn btn-primary" onclick="refreshIntegrations()">
+          <i class="fas fa-sync-alt"></i> Refresh Status
+        </button>
+      </div>
+
+      <div class="card-grid">
+        <div class="integration-card">
+          <div class="integration-header">
+            <div class="integration-icon" style="background: #0052CC;">
+              <i class="fab fa-jira"></i>
+            </div>
+            <div>
+              <div class="integration-title">Jira Integration</div>
+              <div class="integration-status" id="jiraStatus">Checking...</div>
+            </div>
+            <button class="btn btn-sm btn-outline" onclick="testJiraConnection()">
+              <i class="fas fa-plug"></i> Test
+            </button>
+          </div>
+          <p>Bidirectional ticket synchronization with Jira</p>
+          <div class="integration-stats" id="jiraStats"></div>
+        </div>
+
+        <div class="integration-card">
+          <div class="integration-header">
+            <div class="integration-icon" style="background: #81B441;">
+              <i class="fas fa-server"></i>
+            </div>
+            <div>
+              <div class="integration-title">ServiceNow</div>
+              <div class="integration-status" id="serviceNowStatus">Checking...</div>
+            </div>
+            <button class="btn btn-sm btn-outline" onclick="testServiceNowConnection()">
+              <i class="fas fa-plug"></i> Test
+            </button>
+          </div>
+          <p>Automated incident creation and management</p>
+          <div class="integration-stats" id="serviceNowStats"></div>
+        </div>
+
+        <div class="integration-card">
+          <div class="integration-header">
+            <div class="integration-icon" style="background: #DC382D;">
+              <i class="fas fa-database"></i>
+            </div>
+            <div>
+              <div class="integration-title">Redis Cache</div>
+              <div class="integration-status" id="redisStatus">Checking...</div>
+            </div>
+            <button class="btn btn-sm btn-outline" onclick="clearRedisCache()">
+              <i class="fas fa-trash"></i> Clear
+            </button>
+          </div>
+          <p>High-performance distributed caching</p>
+          <div class="integration-stats" id="redisStats"></div>
+        </div>
+
+        <div class="integration-card">
+          <div class="integration-header">
+            <div class="integration-icon" style="background: #34495E;">
+              <i class="fas fa-envelope"></i>
+            </div>
+            <div>
+              <div class="integration-title">Email Service</div>
+              <div class="integration-status" id="emailStatus">Checking...</div>
+            </div>
+            <button class="btn btn-sm btn-outline" onclick="sendTestEmail()">
+              <i class="fas fa-paper-plane"></i> Test
+            </button>
+          </div>
+          <p>Automated email notifications and alerts</p>
+          <div class="integration-stats" id="emailStats"></div>
+        </div>
+
+        <div class="integration-card">
+          <div class="integration-header">
+            <div class="integration-icon" style="background: #000000;">
+              <i class="fas fa-bolt"></i>
+            </div>
+            <div>
+              <div class="integration-title">WebSocket</div>
+              <div class="integration-status" id="websocketStatus">Checking...</div>
+            </div>
+            <button class="btn btn-sm btn-outline" onclick="testWebSocketConnection()">
+              <i class="fas fa-satellite-dish"></i> Test
+            </button>
+          </div>
+          <p>Real-time updates and notifications</p>
+          <div class="integration-stats" id="websocketStats"></div>
+        </div>
+
+        <div class="integration-card">
+          <div class="integration-header">
+            <div class="integration-icon" style="background: #00A67E;">
+              <i class="fas fa-robot"></i>
+            </div>
+            <div>
+              <div class="integration-title">OpenAI API</div>
+              <div class="integration-status" id="openaiStatus">Checking...</div>
+            </div>
+            <button class="btn btn-sm btn-outline" onclick="testOpenAIConnection()">
+              <i class="fas fa-brain"></i> Test
+            </button>
+          </div>
+          <p>AI-powered conversation and automation</p>
+          <div class="integration-stats" id="openaiStats"></div>
+        </div>
+      </div>
+
+      <div style="margin-top: 2rem;">
+        <h3>Integration Logs</h3>
+        <div id="integrationLogs" style="background: #f8f9fa; padding: 1rem; border-radius: 8px; font-family: monospace; font-size: 0.9rem; max-height: 300px; overflow-y: auto;">
+          <div style="color: var(--secondary);">Integration logs will appear here...</div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Notification Container -->
@@ -1060,6 +1312,12 @@
           break;
         case 'hr-portal':
           refreshHRData();
+          break;
+        case 'search':
+          // Search tab loaded - no initial data needed
+          break;
+        case 'integrations':
+          refreshIntegrations();
           break;
       }
 
@@ -1608,6 +1866,237 @@
 
     function showCreateOnboarding() {
       console.log('Show create onboarding modal');
+    }
+
+    // Search functions
+    async function performSearch() {
+      const query = document.getElementById('searchQuery').value.trim();
+      const type = document.getElementById('searchType').value;
+      const status = document.getElementById('statusFilter').value;
+      const priority = document.getElementById('priorityFilter').value;
+      const dateFrom = document.getElementById('dateFromFilter').value;
+      const dateTo = document.getElementById('dateToFilter').value;
+
+      if (!query) {
+        showNotification('Please enter a search query', 'error');
+        return;
+      }
+
+      const resultsDiv = document.getElementById('searchResults');
+      resultsDiv.innerHTML = '<div class="loading"></div> Searching...';
+
+      try {
+        const response = await fetch('/api/search/universal', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            query,
+            type,
+            filters: { status, priority, dateFrom, dateTo }
+          })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+          displaySearchResults(data.results);
+        } else {
+          resultsDiv.innerHTML = '<p style="color: var(--danger);">Search failed: ' + (data.error || 'Unknown error') + '</p>';
+        }
+      } catch (err) {
+        console.error('Search error:', err);
+        resultsDiv.innerHTML = '<p style="color: var(--danger);">Search failed. Please try again.</p>';
+      }
+    }
+
+    function displaySearchResults(results) {
+      const resultsDiv = document.getElementById('searchResults');
+      
+      if (!results || results.length === 0) {
+        resultsDiv.innerHTML = '<p style="color: var(--secondary); text-align: center;">No results found</p>';
+        return;
+      }
+
+      let html = `<h3>Search Results (${results.length})</h3>`;
+      
+      results.forEach(result => {
+        const typeIcon = {
+          ticket: 'fas fa-ticket-alt',
+          access_request: 'fas fa-key',
+          onboarding: 'fas fa-user-plus',
+          user: 'fas fa-user'
+        }[result.type] || 'fas fa-file';
+
+        html += `
+          <div class="search-result-card" style="background: white; padding: 1rem; margin: 1rem 0; border-radius: 8px; border-left: 4px solid var(--primary);">
+            <div style="display: flex; justify-content: space-between; align-items: start;">
+              <div>
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                  <i class="${typeIcon}" style="color: var(--primary);"></i>
+                  <strong>${result.title || result.description || 'No title'}</strong>
+                  <span style="background: var(--light); padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.8rem; text-transform: capitalize;">${result.type.replace('_', ' ')}</span>
+                </div>
+                <p style="color: var(--secondary); margin: 0.5rem 0;">${result.description || result.content || 'No description'}</p>
+                <div style="display: flex; gap: 1rem; font-size: 0.9rem; color: var(--secondary);">
+                  ${result.status ? `<span><strong>Status:</strong> ${result.status}</span>` : ''}
+                  ${result.priority ? `<span><strong>Priority:</strong> ${result.priority}</span>` : ''}
+                  ${result.created_at ? `<span><strong>Created:</strong> ${new Date(result.created_at).toLocaleDateString()}</span>` : ''}
+                </div>
+              </div>
+              <span style="background: var(--primary)20; color: var(--primary); padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.8rem;">
+                #${result.id}
+              </span>
+            </div>
+          </div>
+        `;
+      });
+      
+      resultsDiv.innerHTML = html;
+    }
+
+    function clearSearch() {
+      document.getElementById('searchQuery').value = '';
+      document.getElementById('searchType').value = 'all';
+      document.getElementById('statusFilter').value = '';
+      document.getElementById('priorityFilter').value = '';
+      document.getElementById('dateFromFilter').value = '';
+      document.getElementById('dateToFilter').value = '';
+      document.getElementById('searchResults').innerHTML = `
+        <div style="text-align: center; color: var(--secondary); padding: 2rem;">
+          <i class="fas fa-search" style="font-size: 3rem; opacity: 0.3;"></i>
+          <p>Enter your search query above to find tickets, access requests, and more</p>
+        </div>
+      `;
+    }
+
+    // Integration functions
+    async function refreshIntegrations() {
+      try {
+        const response = await fetch('/api/integrations/status', { credentials: 'include' });
+        const data = await response.json();
+        
+        if (data.success) {
+          updateIntegrationStatus('jira', data.integrations.jira);
+          updateIntegrationStatus('serviceNow', data.integrations.servicenow);
+          updateIntegrationStatus('redis', data.integrations.redis);
+          updateIntegrationStatus('email', data.integrations.email);
+          updateIntegrationStatus('websocket', data.integrations.websocket);
+          updateIntegrationStatus('openai', data.integrations.openai);
+        }
+      } catch (err) {
+        console.error('Failed to refresh integrations:', err);
+        showNotification('Failed to refresh integration status', 'error');
+      }
+    }
+
+    function updateIntegrationStatus(type, status) {
+      const statusElement = document.getElementById(type + 'Status');
+      const statsElement = document.getElementById(type + 'Stats');
+      
+      if (statusElement) {
+        const isConnected = status?.connected || status?.enabled;
+        statusElement.innerHTML = isConnected 
+          ? '<span style="color: var(--success);"><i class="fas fa-check-circle"></i> Connected</span>'
+          : '<span style="color: var(--danger);"><i class="fas fa-times-circle"></i> Disconnected</span>';
+      }
+
+      if (statsElement && status?.stats) {
+        let html = '<div style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--secondary);">';
+        Object.entries(status.stats).forEach(([key, value]) => {
+          html += `<div>${key}: ${value}</div>`;
+        });
+        html += '</div>';
+        statsElement.innerHTML = html;
+      }
+    }
+
+    async function testJiraConnection() {
+      showNotification('Testing Jira connection...', 'info');
+      try {
+        const response = await fetch('/api/integrations/test/jira', { 
+          method: 'POST', 
+          credentials: 'include' 
+        });
+        const result = await response.json();
+        showNotification(result.success ? 'Jira connection successful' : 'Jira connection failed', 
+                        result.success ? 'success' : 'error');
+      } catch (err) {
+        showNotification('Jira test failed', 'error');
+      }
+    }
+
+    async function testServiceNowConnection() {
+      showNotification('Testing ServiceNow connection...', 'info');
+      try {
+        const response = await fetch('/api/integrations/test/servicenow', { 
+          method: 'POST', 
+          credentials: 'include' 
+        });
+        const result = await response.json();
+        showNotification(result.success ? 'ServiceNow connection successful' : 'ServiceNow connection failed', 
+                        result.success ? 'success' : 'error');
+      } catch (err) {
+        showNotification('ServiceNow test failed', 'error');
+      }
+    }
+
+    async function testWebSocketConnection() {
+      showNotification('Testing WebSocket connection...', 'info');
+      try {
+        const response = await fetch('/api/websocket/stats', { credentials: 'include' });
+        const result = await response.json();
+        showNotification('WebSocket status retrieved', 'success');
+      } catch (err) {
+        showNotification('WebSocket test failed', 'error');
+      }
+    }
+
+    async function testOpenAIConnection() {
+      showNotification('Testing OpenAI connection...', 'info');
+      try {
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ message: 'test connection' })
+        });
+        const result = await response.json();
+        showNotification('OpenAI connection successful', 'success');
+      } catch (err) {
+        showNotification('OpenAI test failed', 'error');
+      }
+    }
+
+    async function clearRedisCache() {
+      if (!confirm('Are you sure you want to clear the Redis cache?')) return;
+      
+      try {
+        const response = await fetch('/api/cache/clear', { 
+          method: 'POST', 
+          credentials: 'include' 
+        });
+        const result = await response.json();
+        showNotification(result.success ? 'Cache cleared successfully' : 'Failed to clear cache', 
+                        result.success ? 'success' : 'error');
+      } catch (err) {
+        showNotification('Failed to clear cache', 'error');
+      }
+    }
+
+    async function sendTestEmail() {
+      showNotification('Sending test email...', 'info');
+      try {
+        const response = await fetch('/api/email/test', { 
+          method: 'POST', 
+          credentials: 'include' 
+        });
+        const result = await response.json();
+        showNotification(result.success ? 'Test email sent successfully' : 'Failed to send test email', 
+                        result.success ? 'success' : 'error');
+      } catch (err) {
+        showNotification('Failed to send test email', 'error');
+      }
     }
   </script>
 </body>

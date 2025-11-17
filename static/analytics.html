@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Dashboard - IT Workflow Assistant</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
+    <style>
+        .analytics-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .analytics-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .time-range-selector {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        .time-range-btn {
+            padding: 8px 16px;
+            border: 2px solid white;
+            background: transparent;
+            color: white;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .time-range-btn:hover, .time-range-btn.active {
+            background: white;
+            color: #667eea;
+        }
+        
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .analytics-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            border: 1px solid #e1e5e9;
+        }
+        
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: between;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f8f9fa;
+        }
+        
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin: 0;
+        }
+        
+        .card-icon {
+            font-size: 24px;
+            margin-right: 10px;
+        }
+        
+        .metric-value {
+            font-size: 36px;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+        
+        .metric-label {
+            color: #6c757d;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .trend-indicator {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        
+        .trend-up { color: #28a745; }
+        .trend-down { color: #dc3545; }
+        .trend-stable { color: #ffc107; }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 20px;
+        }
+        
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .kpi-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .insights-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .insight-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .insight-item.info { border-left-color: #17a2b8; background: #e7f3ff; }
+        .insight-item.success { border-left-color: #28a745; background: #e7f5e7; }
+        .insight-item.warning { border-left-color: #ffc107; background: #fff8e1; }
+        .insight-item.danger { border-left-color: #dc3545; background: #ffeaea; }
+        
+        .insight-content h4 {
+            margin: 0 0 5px 0;
+            font-size: 16px;
+        }
+        
+        .insight-content p {
+            margin: 0;
+            color: #6c757d;
+            font-size: 14px;
+        }
+        
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+            color: #6c757d;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        
+        .export-controls {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            justify-content: flex-end;
+        }
+        
+        .export-btn {
+            padding: 8px 16px;
+            border: 1px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .export-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+        
+        @media (max-width: 768px) {
+            .analytics-container {
+                padding: 10px;
+            }
+            
+            .analytics-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .time-range-selector {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="analytics-container">
+        <div class="analytics-header">
+            <h1>📊 Analytics Dashboard</h1>
+            <p>Comprehensive insights and performance metrics</p>
+            
+            <div class="time-range-selector">
+                <button class="time-range-btn" data-range="7d">7 Days</button>
+                <button class="time-range-btn active" data-range="30d">30 Days</button>
+                <button class="time-range-btn" data-range="90d">90 Days</button>
+                <button class="time-range-btn" data-range="1y">1 Year</button>
+            </div>
+        </div>
+
+        <div class="export-controls">
+            <button class="export-btn" onclick="exportData('json')">Export JSON</button>
+            <button class="export-btn" onclick="exportData('csv')">Export CSV</button>
+            <button class="export-btn" onclick="window.print()">Print Report</button>
+        </div>
+
+        <!-- Overview Stats -->
+        <div class="analytics-grid" id="overview-section">
+            <div class="analytics-card">
+                <div class="card-header">
+                    <h3 class="card-title">🎫 Ticket Statistics</h3>
+                </div>
+                <div id="ticket-stats-content" class="loading">Loading...</div>
+            </div>
+
+            <div class="analytics-card">
+                <div class="card-header">
+                    <h3 class="card-title">🔑 Access Requests</h3>
+                </div>
+                <div id="access-stats-content" class="loading">Loading...</div>
+            </div>
+
+            <div class="analytics-card">
+                <div class="card-header">
+                    <h3 class="card-title">👥 User Activity</h3>
+                </div>
+                <div id="user-stats-content" class="loading">Loading...</div>
+            </div>
+
+            <div class="analytics-card">
+                <div class="card-header">
+                    <h3 class="card-title">📋 Onboarding</h3>
+                </div>
+                <div id="onboarding-stats-content" class="loading">Loading...</div>
+            </div>
+        </div>
+
+        <!-- KPI Section -->
+        <div class="analytics-card">
+            <div class="card-header">
+                <h3 class="card-title">🎯 Key Performance Indicators</h3>
+            </div>
+            <div id="kpi-content" class="loading">Loading...</div>
+        </div>
+
+        <!-- Trends Section -->
+        <div class="analytics-grid">
+            <div class="analytics-card">
+                <div class="card-header">
+                    <h3 class="card-title">📈 Ticket Trends</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="ticket-trends-chart"></canvas>
+                </div>
+            </div>
+
+            <div class="analytics-card">
+                <div class="card-header">
+                    <h3 class="card-title">🔄 Access Request Trends</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="access-trends-chart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Metrics -->
+        <div class="analytics-card">
+            <div class="card-header">
+                <h3 class="card-title">⚡ Performance Metrics</h3>
+            </div>
+            <div id="performance-content" class="loading">Loading...</div>
+        </div>
+
+        <!-- Insights and Recommendations -->
+        <div class="analytics-card">
+            <div class="card-header">
+                <h3 class="card-title">💡 Insights & Recommendations</h3>
+            </div>
+            <div id="insights-content" class="loading">Loading...</div>
+        </div>
+    </div>
+
+    <script>
+        let currentTimeRange = '30d';
+        let analyticsData = null;
+        let ticketChart = null;
+        let accessChart = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAnalytics();
+            setupEventListeners();
+            
+            // Auto-refresh every 30 seconds
+            setInterval(loadAnalytics, 30000);
+        });
+
+        function setupEventListeners() {
+            // Time range selector
+            document.querySelectorAll('.time-range-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.time-range-btn').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    currentTimeRange = e.target.dataset.range;
+                    loadAnalytics();
+                });
+            });
+        }
+
+        async function loadAnalytics() {
+            try {
+                const response = await fetch(`/api/analytics/dashboard?timeRange=${currentTimeRange}`, {
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to load analytics');
+                }
+
+                analyticsData = await response.json();
+                renderAnalytics();
+            } catch (error) {
+                console.error('Analytics error:', error);
+                showError('Failed to load analytics data');
+            }
+        }
+
+        function renderAnalytics() {
+            if (!analyticsData) return;
+
+            renderOverviewStats();
+            renderKPIs();
+            renderTrends();
+            renderPerformanceMetrics();
+            renderInsights();
+        }
+
+        function renderOverviewStats() {
+            const { overview } = analyticsData;
+
+            // Ticket stats
+            const ticketStats = overview.tickets || {};
+            document.getElementById('ticket-stats-content').innerHTML = `
+                <div class="metric-value">${ticketStats.total || 0}</div>
+                <div class="metric-label">Total Tickets</div>
+                <div style="margin-top: 15px;">
+                    <div>Open: <strong>${ticketStats.byStatus?.open || 0}</strong></div>
+                    <div>In Progress: <strong>${ticketStats.byStatus?.in_progress || 0}</strong></div>
+                    <div>Resolved: <strong>${ticketStats.byStatus?.resolved || 0}</strong></div>
+                </div>
+                <div style="margin-top: 10px; font-size: 12px; color: #6c757d;">
+                    Avg Resolution: ${ticketStats.resolutionTime?.average || 0}h
+                </div>
+            `;
+
+            // Access request stats
+            const accessStats = overview.accessRequests || {};
+            document.getElementById('access-stats-content').innerHTML = `
+                <div class="metric-value">${accessStats.total || 0}</div>
+                <div class="metric-label">Access Requests</div>
+                <div style="margin-top: 15px;">
+                    <div>Pending: <strong>${accessStats.byStatus?.pending || 0}</strong></div>
+                    <div>Approved: <strong>${accessStats.byStatus?.approved || 0}</strong></div>
+                    <div>Denied: <strong>${accessStats.byStatus?.denied || 0}</strong></div>
+                </div>
+                <div style="margin-top: 10px; font-size: 12px; color: #6c757d;">
+                    Avg Approval: ${accessStats.avgApprovalTime || 0}h
+                </div>
+            `;
+
+            // User stats (if available)
+            const userStats = overview.users || {};
+            document.getElementById('user-stats-content').innerHTML = `
+                <div class="metric-value">${userStats.total || 0}</div>
+                <div class="metric-label">Total Users</div>
+                <div style="margin-top: 15px;">
+                    <div>Active: <strong>${userStats.activeUsers || 0}</strong></div>
+                    <div>New (${currentTimeRange}): <strong>${userStats.recentRegistrations || 0}</strong></div>
+                </div>
+            `;
+
+            // Onboarding stats (if available)
+            const onboardingStats = overview.onboarding || {};
+            document.getElementById('onboarding-stats-content').innerHTML = `
+                <div class="metric-value">${onboardingStats.total || 0}</div>
+                <div class="metric-label">Onboarding Records</div>
+                <div style="margin-top: 15px;">
+                    <div>Completed: <strong>${onboardingStats.completed || 0}</strong></div>
+                    <div>Completion Rate: <strong>${onboardingStats.completionRate || 0}%</strong></div>
+                </div>
+            `;
+        }
+
+        function renderKPIs() {
+            const { overview } = analyticsData;
+            const kpis = overview.kpis || [];
+
+            const kpiHtml = kpis.map(kpi => `
+                <div class="kpi-card">
+                    <div class="metric-value" style="font-size: 24px;">${kpi.value}${kpi.unit}</div>
+                    <div class="metric-label">${kpi.name}</div>
+                    <div class="trend-indicator trend-${kpi.trend}">
+                        ${kpi.trend === 'up' ? '↗️' : kpi.trend === 'down' ? '↘️' : '➡️'} 
+                        ${kpi.description}
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('kpi-content').innerHTML = `
+                <div class="kpi-grid">${kpiHtml}</div>
+            `;
+        }
+
+        function renderTrends() {
+            const { trends } = analyticsData;
+
+            // Ticket trends chart
+            if (trends?.tickets) {
+                renderTrendChart('ticket-trends-chart', trends.tickets, 'Tickets');
+            }
+
+            // Access request trends chart
+            if (trends?.accessRequests) {
+                renderTrendChart('access-trends-chart', trends.accessRequests, 'Access Requests');
+            }
+        }
+
+        function renderTrendChart(canvasId, data, label) {
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) return;
+
+            // Destroy existing chart
+            if (canvasId === 'ticket-trends-chart' && ticketChart) {
+                ticketChart.destroy();
+            }
+            if (canvasId === 'access-trends-chart' && accessChart) {
+                accessChart.destroy();
+            }
+
+            const labels = data.map(item => moment(item.date).format('MMM DD'));
+            const counts = data.map(item => item.count || 0);
+            const resolved = data.map(item => item.resolved || item.approved || 0);
+
+            const chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: `New ${label}`,
+                        data: counts,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.3
+                    }, {
+                        label: `Resolved/Approved`,
+                        data: resolved,
+                        borderColor: '#28a745',
+                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            if (canvasId === 'ticket-trends-chart') {
+                ticketChart = chart;
+            } else if (canvasId === 'access-trends-chart') {
+                accessChart = chart;
+            }
+        }
+
+        function renderPerformanceMetrics() {
+            const { performance } = analyticsData;
+            
+            let performanceHtml = '<div class="loading">Performance data not available</div>';
+            
+            if (performance?.slaCompliance) {
+                const slaData = performance.slaCompliance;
+                performanceHtml = `
+                    <h4>SLA Compliance</h4>
+                    <div class="kpi-grid">
+                        ${slaData.map(item => `
+                            <div class="kpi-card">
+                                <div class="metric-value" style="font-size: 20px;">${item.complianceRate}%</div>
+                                <div class="metric-label">${item.priority.toUpperCase()} Priority</div>
+                                <div style="font-size: 12px; color: #6c757d;">${item.compliant}/${item.total} compliant</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            document.getElementById('performance-content').innerHTML = performanceHtml;
+        }
+
+        function renderInsights() {
+            const { insights } = analyticsData;
+            
+            if (!insights || insights.length === 0) {
+                document.getElementById('insights-content').innerHTML = `
+                    <p style="color: #6c757d; font-style: italic;">No insights available at this time.</p>
+                `;
+                return;
+            }
+
+            const insightsHtml = insights.map(insight => `
+                <li class="insight-item ${insight.severity}">
+                    <div class="insight-content">
+                        <h4>${insight.title}</h4>
+                        <p>${insight.message}</p>
+                        ${insight.recommendation ? `<p><strong>Recommendation:</strong> ${insight.recommendation}</p>` : ''}
+                    </div>
+                </li>
+            `).join('');
+
+            document.getElementById('insights-content').innerHTML = `
+                <ul class="insights-list">${insightsHtml}</ul>
+            `;
+        }
+
+        function showError(message) {
+            const sections = ['ticket-stats-content', 'access-stats-content', 'user-stats-content', 'onboarding-stats-content', 'kpi-content', 'performance-content', 'insights-content'];
+            
+            sections.forEach(sectionId => {
+                const section = document.getElementById(sectionId);
+                if (section && section.classList.contains('loading')) {
+                    section.innerHTML = `<div class="error">${message}</div>`;
+                    section.classList.remove('loading');
+                }
+            });
+        }
+
+        async function exportData(format) {
+            try {
+                const response = await fetch(`/api/analytics/export?format=${format}&timeRange=${currentTimeRange}`, {
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Export failed');
+                }
+
+                if (format === 'json') {
+                    const data = await response.json();
+                    downloadJSON(data, `analytics-${currentTimeRange}-${Date.now()}.json`);
+                } else {
+                    const blob = await response.blob();
+                    downloadBlob(blob, `analytics-${currentTimeRange}-${Date.now()}.csv`);
+                }
+            } catch (error) {
+                console.error('Export error:', error);
+                alert('Export failed. Please try again.');
+            }
+        }
+
+        function downloadJSON(data, filename) {
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            downloadBlob(blob, filename);
+        }
+
+        function downloadBlob(blob, filename) {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
