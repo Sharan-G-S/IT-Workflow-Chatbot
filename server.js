@@ -28,6 +28,7 @@ const { PromptManager } = require('./src/promptManager');
 const { SimpleCache } = require('./src/simpleCache');
 const agentService = require('./src/agentService');
 const notificationService = require('./src/notificationService');
+const AgentTriageRouter = require('./src/agents/AgentTriageRouter');
 
 const app = express();
 app.use(cors({ origin: true, credentials: true }));
@@ -41,6 +42,7 @@ app.use(session({
 app.use(express.static('static'));
 
 const port = process.env.PORT || 3000;
+
 // Initialize OpenAI client if API key is provided; otherwise run in fallback mode
 let client = null;
 const HAS_OPENAI = !!(process.env.OPENAI_API_KEY && String(process.env.OPENAI_API_KEY).trim());
@@ -51,6 +53,19 @@ if (HAS_OPENAI) {
 }
 const cache = new SimpleCache({ maxEntries: 200 });
 const prompts = new PromptManager();
+
+// Initialize LangChain Agent Router
+let agentRouter = null;
+if (HAS_OPENAI) {
+  agentRouter = new AgentTriageRouter({
+    enableMultiAgent: true,
+    confidenceThreshold: 0.7,
+    maxAgents: 2
+  });
+  console.log('[INFO] LangChain Agent Router initialized');
+} else {
+  console.warn('[WARN] LangChain agents disabled - OPENAI_API_KEY not set');
+}
 
 // Auth middleware
 function requireAuth(req, res, next) {
@@ -512,6 +527,90 @@ app.post('/api/intent/detect', requireAuth, (req, res) => {
 });
 
 app.listen(port, () => console.log('Server running on', port));
+
+// ============ LANGCHAIN AGENT ENDPOINTS ============
+app.post('/api/agents/orchestrate', requireAuth, async (req, res) => {
+  const { message, context = {} } = req.body;
+  if (!message) return res.status(400).json({ error: 'Message required' });
+  
+  if (!agentRouter) {
+    return res.status(503).json({ error: 'LangChain agents not available - OPENAI_API_KEY not configured' });
+  }
+  
+  try {
+    const enrichedContext = {
+      ...context,
+      userId: req.session.userId,
+      userRole: context.userRole || 'employee',
+      timestamp: new Date().toISOString()
+    };
+    
+    const result = await agentRouter.route(message, enrichedContext);
+    
+    res.json({
+      success: result.success,
+      message,
+      routing: result.routing,
+      results: result.results,
+      executionTime: result.executionTime,
+      agentsUsed: result.agentsUsed,
+      primaryResult: result.primaryResult
+    });
+  } catch (err) {
+    console.error('agent orchestration error', err);
+    res.status(500).json({ error: String(err) });
+  }
+});
+
+app.get('/api/agents/analytics', requireAuth, (req, res) => {
+  if (!agentRouter) {
+    return res.status(503).json({ error: 'LangChain agents not available' });
+  }
+  
+  try {
+    const analytics = agentRouter.getRoutingAnalytics();
+    res.json({ analytics });
+  } catch (err) {
+    console.error('agent analytics error', err);
+    res.status(500).json({ error: String(err) });
+  }
+});
+
+app.get('/api/agents/available', requireAuth, (req, res) => {
+  if (!agentRouter) {
+    return res.status(503).json({ error: 'LangChain agents not available' });
+  }
+  
+  try {
+    const agents = agentRouter.getAvailableAgents();
+    res.json({ agents });
+  } catch (err) {
+    console.error('available agents error', err);
+    res.status(500).json({ error: String(err) });
+  }
+});
+
+app.post('/api/agents/force-route', requireAuth, async (req, res) => {
+  const { agentName, message, context = {} } = req.body;
+  if (!agentName || !message) {
+    return res.status(400).json({ error: 'Agent name and message required' });
+  }
+  
+  if (!agentRouter) {
+    return res.status(503).json({ error: 'LangChain agents not available' });
+  }
+  
+  try {
+    const result = await agentRouter.forceRoute(agentName, message, {
+      ...context,
+      userId: req.session.userId
+    });
+    res.json({ result });
+  } catch (err) {
+    console.error('force route error', err);
+    res.status(500).json({ error: String(err) });
+  }
+});
 
 // ============ AGENT ENDPOINTS ============
 app.get('/api/agents/status', requireAuth, (req, res) => {

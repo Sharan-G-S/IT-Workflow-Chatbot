@@ -69,6 +69,7 @@
       <button class="tab" onclick="switchTab('tickets')">Tickets</button>
       <button class="tab" onclick="switchTab('access')">Access Requests</button>
       <button class="tab" onclick="switchTab('onboarding')">Onboarding</button>
+      <button class="tab" onclick="switchTab('agents')">LangChain Agents</button>
     </div>
 
     <!-- AI Chat Tab -->
@@ -203,6 +204,41 @@
         <div id="onboardingList" style="margin-top:20px;"></div>
       </div>
     </div>
+
+    <!-- LangChain Agents Tab -->
+    <div id="agentsTab" class="tab-content" style="display:none;">
+      <div class="card">
+        <h2>LangChain Agent Orchestration</h2>
+        <div style="margin-bottom: 20px;">
+          <h3>Agent Triage System</h3>
+          <p>Our intelligent triage system routes your requests to specialized LangChain agents:</p>
+          <ul>
+            <li><strong>IT Support Agent:</strong> Hardware, software, and network issues</li>
+            <li><strong>Access Management Agent:</strong> Permission requests and access control</li>
+            <li><strong>Onboarding Agent:</strong> New employee setup and checklists</li>
+            <li><strong>Escalation Agent:</strong> Critical issues and SLA violations</li>
+          </ul>
+        </div>
+        
+        <div class="form-group">
+          <label>Describe your request:</label>
+          <textarea id="agentQuery" rows="4" placeholder="Describe your IT request and let our agents help you automatically..."></textarea>
+        </div>
+        
+        <button class="btn btn-primary" onclick="orchestrateAgents()">Process with Agents</button>
+        <button class="btn btn-secondary" onclick="loadAgentAnalytics()" style="margin-left: 10px;">View Analytics</button>
+        
+        <div id="agentResponse" style="margin-top:20px; display:none;">
+          <h3>Agent Response</h3>
+          <div id="agentResponseContent"></div>
+        </div>
+        
+        <div id="agentAnalytics" style="margin-top:20px; display:none;">
+          <h3>Agent Analytics</h3>
+          <div id="agentAnalyticsContent"></div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -237,6 +273,7 @@
       if (tab === 'tickets') loadTickets();
       if (tab === 'access') loadAccessRequests();
       if (tab === 'onboarding') loadOnboarding();
+      if (tab === 'agents') loadAvailableAgents();
     }
 
     // Chat functions
@@ -541,6 +578,115 @@
       if (document.getElementById('accessTab').style.display !== 'none') return 'access';
       if (document.getElementById('onboardingTab').style.display !== 'none') return 'onboarding';
       return 'chat';
+    }
+
+    // Agent Orchestration Functions
+    async function orchestrateAgents() {
+      const query = document.getElementById('agentQuery').value;
+      if (!query.trim()) {
+        alert('Please enter a request');
+        return;
+      }
+      
+      const responseDiv = document.getElementById('agentResponse');
+      const contentDiv = document.getElementById('agentResponseContent');
+      
+      responseDiv.style.display = 'block';
+      contentDiv.innerHTML = '<p>Processing your request with LangChain agents...</p>';
+      
+      try {
+        const res = await fetch('/api/agents/orchestrate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ query })
+        });
+        
+        const result = await res.json();
+        
+        if (result.success) {
+          let html = `
+            <div style="background: #f0f9ff; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+              <h4>Routing Decision</h4>
+              <p><strong>Selected Agent:</strong> ${result.routing.agent}</p>
+              <p><strong>Confidence:</strong> ${(result.routing.confidence * 100).toFixed(1)}%</p>
+              <p><strong>Reason:</strong> ${result.routing.reason}</p>
+            </div>
+          `;
+          
+          if (result.routing.multiAgent && result.routing.agents.length > 1) {
+            html += `
+              <div style="background: #fff7ed; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                <h4>Multi-Agent Execution</h4>
+                <p><strong>Agents Used:</strong> ${result.routing.agents.join(', ')}</p>
+              </div>
+            `;
+          }
+          
+          html += `
+            <div style="background: #f0fdf4; padding: 15px; border-radius: 8px;">
+              <h4>Agent Response</h4>
+              <p>${result.response.replace(/\n/g, '<br>')}</p>
+            </div>
+          `;
+          
+          contentDiv.innerHTML = html;
+        } else {
+          contentDiv.innerHTML = `<p style="color: red;">Error: ${result.error}</p>`;
+        }
+      } catch (err) {
+        contentDiv.innerHTML = `<p style="color: red;">Failed to process request: ${err.message}</p>`;
+      }
+    }
+    
+    async function loadAvailableAgents() {
+      try {
+        const res = await fetch('/api/agents/available', { credentials: 'include' });
+        const agents = await res.json();
+        
+        if (agents.success) {
+          console.log('Available agents loaded:', agents.agents);
+        }
+      } catch (err) {
+        console.error('Failed to load agents:', err);
+      }
+    }
+    
+    async function loadAgentAnalytics() {
+      const analyticsDiv = document.getElementById('agentAnalytics');
+      const contentDiv = document.getElementById('agentAnalyticsContent');
+      
+      analyticsDiv.style.display = 'block';
+      contentDiv.innerHTML = '<p>Loading agent analytics...</p>';
+      
+      try {
+        const res = await fetch('/api/agents/analytics', { credentials: 'include' });
+        const data = await res.json();
+        
+        if (data.success) {
+          let html = `
+            <div style="background: #f8fafc; padding: 15px; border-radius: 8px;">
+              <h4>Routing Statistics</h4>
+              <p><strong>Total Requests:</strong> ${data.analytics.totalRequests}</p>
+              <p><strong>Average Confidence:</strong> ${(data.analytics.averageConfidence * 100).toFixed(1)}%</p>
+            </div>
+          `;
+          
+          if (data.analytics.agentUsage && Object.keys(data.analytics.agentUsage).length > 0) {
+            html += '<h4>Agent Usage:</h4><ul>';
+            for (const [agent, count] of Object.entries(data.analytics.agentUsage)) {
+              html += `<li><strong>${agent}:</strong> ${count} requests</li>`;
+            }
+            html += '</ul>';
+          }
+          
+          contentDiv.innerHTML = html;
+        } else {
+          contentDiv.innerHTML = `<p style="color: red;">Error: ${data.error}</p>`;
+        }
+      } catch (err) {
+        contentDiv.innerHTML = `<p style="color: red;">Failed to load analytics: ${err.message}</p>`;
+      }
     }
 
     // Auto-refresh agent status every 30 seconds
