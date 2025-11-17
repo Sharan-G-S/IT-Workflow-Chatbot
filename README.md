@@ -280,10 +280,8 @@ npm run lint
 - [ ] WebSocket support for real-time updates
 - [ ] Email notifications for ticket/request updates
 - [ ] Advanced search and filtering
-- [ ] Analytics dashboard for admins
+- [ ] Analytics dashboard for admins, hr, employee
 - [ ] Integration with external ticketing systems (Jira, ServiceNow)
-- [ ] Multi-language support
-- [ ] Dark mode theme
 
 ## Documentation
 
