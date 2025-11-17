@@ -26,7 +26,6 @@ const conversationService = require('./src/conversationService');
 const intentDetector = require('./src/intentDetector');
 const { PromptManager } = require('./src/promptManager');
 const { SimpleCache } = require('./src/simpleCache');
-const { RedisCache } = require('./src/redisCache');
 const { WebSocketService } = require('./src/websocketService');
 const { EmailService } = require('./src/emailService');
 const { SearchService } = require('./src/searchService');
@@ -36,7 +35,6 @@ const agentService = require('./src/agentService');
 const notificationService = require('./src/notificationService');
 const AgentTriageRouter = require('./src/agents/AgentTriageRouter');
 const http = require('http');
-const RedisStore = require('connect-redis').default;
 
 const app = express();
 app.use(cors({ origin: true, credentials: true }));
@@ -60,8 +58,7 @@ if (HAS_OPENAI) {
   console.warn('[WARN] OPENAI_API_KEY not set. Running in fallback mode with deterministic responses.');
 }
 // Initialize enhanced services
-let cache = new SimpleCache({ maxEntries: 200 }); // Fallback cache
-let redisCache = null;
+let cache = new SimpleCache({ maxEntries: 200 }); // In-memory cache
 let websocketService = null;
 let emailService = null;
 let searchService = null;
@@ -69,20 +66,7 @@ let analyticsService = null;
 let integrationsService = null;
 const prompts = new PromptManager();
 
-// Initialize Redis cache if available
-try {
-  redisCache = new RedisCache();
-  redisCache.connect().then(connected => {
-    if (connected) {
-      cache = redisCache; // Use Redis as primary cache
-      console.log('[CACHE] Using Redis for persistent caching');
-    } else {
-      console.log('[CACHE] Redis unavailable, using in-memory cache');
-    }
-  });
-} catch (error) {
-  console.warn('[CACHE] Redis initialization failed, using in-memory cache:', error.message);
-}
+console.log('[CACHE] Using in-memory cache system');
 
 // Create HTTP server for Socket.IO
 const server = http.createServer(app);
@@ -1239,7 +1223,6 @@ server.listen(port, () => {
   console.log('  ✓ SLA Monitoring & Escalation');
   console.log('  ✓ Onboarding Cadence Reminders');
   console.log('[ENHANCED] New features available:');
-  console.log('  ✓ Redis Persistent Cache');
   console.log('  ✓ WebSocket Real-time Updates');
   console.log('  ✓ Email Notifications');
   console.log('  ✓ Advanced Search & Filtering');

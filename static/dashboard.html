@@ -1157,22 +1157,7 @@
           <div class="integration-stats" id="serviceNowStats"></div>
         </div>
 
-        <div class="integration-card">
-          <div class="integration-header">
-            <div class="integration-icon" style="background: #DC382D;">
-              <i class="fas fa-database"></i>
-            </div>
-            <div>
-              <div class="integration-title">Redis Cache</div>
-              <div class="integration-status" id="redisStatus">Checking...</div>
-            </div>
-            <button class="btn btn-sm btn-outline" onclick="clearRedisCache()">
-              <i class="fas fa-trash"></i> Clear
-            </button>
-          </div>
-          <p>High-performance distributed caching</p>
-          <div class="integration-stats" id="redisStats"></div>
-        </div>
+
 
         <div class="integration-card">
           <div class="integration-header">
@@ -1979,7 +1964,6 @@
         if (data.success) {
           updateIntegrationStatus('jira', data.integrations.jira);
           updateIntegrationStatus('serviceNow', data.integrations.servicenow);
-          updateIntegrationStatus('redis', data.integrations.redis);
           updateIntegrationStatus('email', data.integrations.email);
           updateIntegrationStatus('websocket', data.integrations.websocket);
           updateIntegrationStatus('openai', data.integrations.openai);
@@ -2065,22 +2049,6 @@
         showNotification('OpenAI connection successful', 'success');
       } catch (err) {
         showNotification('OpenAI test failed', 'error');
-      }
-    }
-
-    async function clearRedisCache() {
-      if (!confirm('Are you sure you want to clear the Redis cache?')) return;
-      
-      try {
-        const response = await fetch('/api/cache/clear', { 
-          method: 'POST', 
-          credentials: 'include' 
-        });
-        const result = await response.json();
-        showNotification(result.success ? 'Cache cleared successfully' : 'Failed to clear cache', 
-                        result.success ? 'success' : 'error');
-      } catch (err) {
-        showNotification('Failed to clear cache', 'error');
       }
     }
 

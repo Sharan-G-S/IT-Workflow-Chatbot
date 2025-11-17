@@ -27,8 +27,7 @@ A **production-ready AI-powered IT workflow automation platform** with conversat
 - **Jira Integration** - Bidirectional ticket synchronization
 - **ServiceNow Integration** - Automated incident creation
 - **Real-time WebSocket Updates** - Live dashboard notifications
-- **Redis Caching** - High-performance distributed caching
-- **Analytics Platform** - Comprehensive reporting and insights
+ights
 
 ### 🔐 **Security & Access Control**
 - **Role-based Authentication** (Employee, IT Staff, HR, Admin)
@@ -69,7 +68,7 @@ A **production-ready AI-powered IT workflow automation platform** with conversat
 ### **Prerequisites**
 - Node.js 16+ 
 - OpenAI API Key
-- Optional: Redis, SMTP credentials
+- Optional: SMTP credentials for email notifications
 
 ### **Installation**
 ```bash
@@ -171,7 +170,6 @@ IT-Workflow-Chatbot/
 │   ├── 📊 analyticsService.js     # Reporting and KPIs
 │   ├── 🔗 externalIntegrationsService.js # External APIs
 │   ├── ⚡ websocketService.js     # Real-time updates
-│   ├── 🗄️ redisCache.js          # Distributed caching
 │   ├── 🔐 authService.js          # Authentication
 │   ├── 💾 database.js             # Data persistence
 │   ├── 📝 promptManager.js        # AI prompt optimization
@@ -206,11 +204,6 @@ OPENAI_API_KEY=sk-your-openai-api-key-here
 
 ### **Enhanced Features** (Optional)
 ```env
-# Redis Caching (Improves performance 3x)
-REDIS_HOST=localhost
-REDIS_PORT=6379
-REDIS_PASSWORD=your-redis-password
-
 # Email Notifications
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
@@ -292,8 +285,7 @@ npm run lint
 
 1. Set strong `SESSION_SECRET` environment variable
 2. Use HTTPS and set `cookie.secure = true`
-3. Consider Redis for session storage (multi-instance support)
-4. Add rate limiting and request validation
+3. Add rate limiting and request validation
 5. Implement content filtering/moderation
 6. Monitor API usage and costs with telemetry
 
@@ -400,7 +392,7 @@ GET  /api/websocket/stats        # Connection statistics
 ## 🚀 **Performance & Scalability**
 
 ### **Performance Optimizations**
-- **Redis Caching**: 3x faster API responses
+- **In-Memory Caching**: Optimized response times
 - **Connection Pooling**: Efficient database operations
 - **Lazy Loading**: Optimized frontend performance
 - **Compression**: Gzipped responses for faster load times
@@ -554,7 +546,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 🧪 Test Coverage: 85%+
 ⚡ API Endpoints: 35+
 🤖 AI Agents: 6 specialized agents
-🔗 Integrations: Jira, ServiceNow, Email, WebSocket, Redis
+🔗 Integrations: Jira, ServiceNow, Email, WebSocket
 📱 UI Components: Mobile-responsive design
 🌐 Browser Support: Chrome, Firefox, Safari, Edge
 ```
