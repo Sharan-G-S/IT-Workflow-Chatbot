@@ -27,6 +27,7 @@ const intentDetector = require('./src/intentDetector');
 const { PromptManager } = require('./src/promptManager');
 const { SimpleCache } = require('./src/simpleCache');
 const agentService = require('./src/agentService');
+const notificationService = require('./src/notificationService');
 
 const app = express();
 app.use(cors({ origin: true, credentials: true }));
@@ -235,7 +236,11 @@ app.post('/api/onboarding', requireAuth, (req, res) => {
       systemsToProvision,
       welcomeMessage
     );
-    res.json({ success: true, checklistId });
+    
+    // Auto-schedule reminders for checklist items
+    const reminderResult = agentService.scheduleChecklistReminders(checklistId);
+    
+    res.json({ success: true, checklistId, reminders: reminderResult });
   } catch (err) {
     console.error('create onboarding error', err);
     res.status(500).json({ error: String(err) });
@@ -549,6 +554,27 @@ app.post('/api/onboarding/reminders/run', requireAuth, (req, res) => {
   }
 });
 
+// Test notification endpoint
+app.post('/api/notifications/test', requireAuth, async (req, res) => {
+  const { type } = req.body;
+  try {
+    const result = await notificationService.sendTestNotification(type || 'webhook');
+    res.json({ success: true, result });
+  } catch (e) {
+    res.status(500).json({ error: String(e) });
+  }
+});
+
+// Get notification configuration
+app.get('/api/notifications/config', requireAuth, (req, res) => {
+  try {
+    const config = notificationService.getConfig();
+    res.json({ config });
+  } catch (e) {
+    res.status(500).json({ error: String(e) });
+  }
+});
+
 // Background agent loops (lightweight intervals)
 const FIVE_MIN = 5 * 60 * 1000;
 const TEN_MIN = 10 * 60 * 1000;
@@ -561,10 +587,25 @@ setInterval(() => {
   } catch (e) { console.warn('[Agent] access scan error', e.message); }
 }, FIVE_MIN);
 
-setInterval(() => {
+setInterval(async () => {
   try {
     const r = agentService.monitorSLA();
-    if (r.escalated) console.log('[Agent] Escalated', r.escalated, 'tickets');
+    if (r.escalated) {
+      console.log('[Agent] Escalated', r.escalated, 'tickets');
+      
+      // Send notifications for escalated tickets
+      try {
+        const escalatedTickets = ticketService.getAllTickets({ status: 'open' }).filter(t => t.escalated_at);
+        for (const ticket of escalatedTickets.slice(-r.escalated)) { // Get recently escalated
+          await notificationService.sendEscalationNotification(ticket, {
+            escalated_at: ticket.escalated_at,
+            escalation_level: ticket.escalation_level
+          });
+        }
+      } catch (notifErr) {
+        console.warn('[Agent] notification error', notifErr.message);
+      }
+    }
   } catch (e) { console.warn('[Agent] sla monitor error', e.message); }
 }, TEN_MIN);
 

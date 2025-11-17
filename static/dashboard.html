@@ -24,6 +24,46 @@
       <a href="/chat.html" class="btn btn-sm" style="background: white; color: #667eea;">Open Enhanced Chat →</a>
     </div>
 
+    <!-- Agent Status Widget -->
+    <div class="card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; margin-bottom: 20px;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h3 style="margin: 0; color: white;">🤖 Autonomous Agents Status</h3>
+          <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 14px;">Real-time agent activity monitoring</p>
+        </div>
+        <button class="btn btn-sm" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);" onclick="refreshAgentStatus()">↻ Refresh</button>
+      </div>
+      
+      <div id="agentStatus" style="margin-top: 15px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+          <div class="agent-stat">
+            <div style="font-size: 24px; font-weight: bold;" id="pendingAccessCount">-</div>
+            <div style="font-size: 12px; opacity: 0.8;">Pending Access Requests</div>
+          </div>
+          <div class="agent-stat">
+            <div style="font-size: 24px; font-weight: bold;" id="openTicketsCount">-</div>
+            <div style="font-size: 12px; opacity: 0.8;">Open Tickets</div>
+          </div>
+          <div class="agent-stat">
+            <div style="font-size: 24px; font-weight: bold;" id="overdueTicketsCount">-</div>
+            <div style="font-size: 12px; opacity: 0.8;">Overdue Tickets</div>
+          </div>
+          <div class="agent-stat">
+            <div style="font-size: 24px; font-weight: bold;" id="dueRemindersCount">-</div>
+            <div style="font-size: 12px; opacity: 0.8;">Due Reminders</div>
+          </div>
+        </div>
+        
+        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2);">
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button class="btn btn-sm" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);" onclick="triggerAccessApproval()">🔄 Run Access Approval</button>
+            <button class="btn btn-sm" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);" onclick="triggerSLAEscalation()">⏰ Run SLA Check</button>
+            <button class="btn btn-sm" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);" onclick="triggerReminders()">📋 Send Reminders</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="tabs">
       <button class="tab active" onclick="switchTab('chat')">AI Chat</button>
       <button class="tab" onclick="switchTab('tickets')">Tickets</button>
@@ -434,6 +474,82 @@
         console.error(err);
       }
     }
+
+    // Agent Status Functions
+    async function refreshAgentStatus() {
+      try {
+        const res = await fetch('/api/agents/status', { credentials: 'include' });
+        const data = await res.json();
+        const status = data.status;
+        
+        document.getElementById('pendingAccessCount').textContent = status.pendingAccess;
+        document.getElementById('openTicketsCount').textContent = status.openTickets;
+        document.getElementById('overdueTicketsCount').textContent = status.overdueTickets;
+        document.getElementById('dueRemindersCount').textContent = status.dueReminders;
+      } catch (err) {
+        console.error('Failed to refresh agent status:', err);
+      }
+    }
+
+    async function triggerAccessApproval() {
+      try {
+        const res = await fetch('/api/access-requests/approve/pending', { 
+          method: 'POST', 
+          credentials: 'include' 
+        });
+        const data = await res.json();
+        alert(`Access approval scan completed. Approved: ${data.result.approved}/${data.result.scanned} requests`);
+        refreshAgentStatus();
+        if (getCurrentTab() === 'access') loadAccessRequests();
+      } catch (err) {
+        alert('Error running access approval');
+      }
+    }
+
+    async function triggerSLAEscalation() {
+      try {
+        const res = await fetch('/api/tickets/escalate/run', { 
+          method: 'POST', 
+          credentials: 'include' 
+        });
+        const data = await res.json();
+        alert(`SLA escalation completed. Escalated: ${data.result.escalated}/${data.result.scanned} tickets`);
+        refreshAgentStatus();
+        if (getCurrentTab() === 'tickets') loadTickets();
+      } catch (err) {
+        alert('Error running SLA escalation');
+      }
+    }
+
+    async function triggerReminders() {
+      try {
+        const res = await fetch('/api/onboarding/reminders/run', { 
+          method: 'POST', 
+          credentials: 'include' 
+        });
+        const data = await res.json();
+        alert(`Reminder dispatch completed. Sent: ${data.result.sent}/${data.result.scanned} reminders`);
+        refreshAgentStatus();
+      } catch (err) {
+        alert('Error sending reminders');
+      }
+    }
+
+    function getCurrentTab() {
+      if (document.getElementById('chatTab').style.display !== 'none') return 'chat';
+      if (document.getElementById('ticketsTab').style.display !== 'none') return 'tickets';
+      if (document.getElementById('accessTab').style.display !== 'none') return 'access';
+      if (document.getElementById('onboardingTab').style.display !== 'none') return 'onboarding';
+      return 'chat';
+    }
+
+    // Auto-refresh agent status every 30 seconds
+    setInterval(refreshAgentStatus, 30000);
+
+    // Load initial agent status when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(refreshAgentStatus, 1000);
+    });
 
     // Initialize
     checkAuth();
