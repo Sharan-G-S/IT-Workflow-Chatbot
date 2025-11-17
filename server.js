@@ -26,6 +26,7 @@ const conversationService = require('./src/conversationService');
 const intentDetector = require('./src/intentDetector');
 const { PromptManager } = require('./src/promptManager');
 const { SimpleCache } = require('./src/simpleCache');
+const agentService = require('./src/agentService');
 
 const app = express();
 app.use(cors({ origin: true, credentials: true }));
@@ -158,8 +159,17 @@ app.post('/api/tickets', requireAuth, (req, res) => {
   const { title, description, priority, category, assignee, tags } = req.body;
   if (!title) return res.status(400).json({ error: 'Title required' });
   try {
-    const ticketId = ticketService.createTicket(req.session.userId, { title, description, priority, category, assignee, tags });
-    res.json({ success: true, ticketId });
+    // Agent classification augmentation
+    const classification = agentService.classifyTicket(`${title} ${description || ''}`);
+    const ticketId = ticketService.createTicket(req.session.userId, {
+      title,
+      description,
+      priority: priority || classification.priority,
+      category: category || classification.category,
+      assignee: assignee || classification.assigneeSuggestion,
+      tags
+    });
+    res.json({ success: true, ticketId, classification });
   } catch (err) {
     console.error('create ticket error', err);
     res.status(500).json({ error: String(err) });
@@ -497,3 +507,70 @@ app.post('/api/intent/detect', requireAuth, (req, res) => {
 });
 
 app.listen(port, () => console.log('Server running on', port));
+
+// ============ AGENT ENDPOINTS ============
+app.get('/api/agents/status', requireAuth, (req, res) => {
+  try {
+    const status = agentService.getStatus();
+    res.json({ status });
+  } catch (e) {
+    console.error('agents status error', e);
+    res.status(500).json({ error: String(e) });
+  }
+});
+
+app.post('/api/access-requests/approve/pending', requireAuth, (req, res) => {
+  try {
+    const result = agentService.scanAccessRequests();
+    res.json({ result });
+  } catch (e) {
+    console.error('approve pending error', e);
+    res.status(500).json({ error: String(e) });
+  }
+});
+
+app.post('/api/tickets/escalate/run', requireAuth, (req, res) => {
+  try {
+    const result = agentService.monitorSLA();
+    res.json({ result });
+  } catch (e) {
+    console.error('sla escalate error', e);
+    res.status(500).json({ error: String(e) });
+  }
+});
+
+app.post('/api/onboarding/reminders/run', requireAuth, (req, res) => {
+  try {
+    const result = agentService.dispatchOnboardingReminders();
+    res.json({ result });
+  } catch (e) {
+    console.error('reminders run error', e);
+    res.status(500).json({ error: String(e) });
+  }
+});
+
+// Background agent loops (lightweight intervals)
+const FIVE_MIN = 5 * 60 * 1000;
+const TEN_MIN = 10 * 60 * 1000;
+const FIFTEEN_MIN = 15 * 60 * 1000;
+
+setInterval(() => {
+  try {
+    const r = agentService.scanAccessRequests();
+    if (r.approved) console.log('[Agent] Auto-approved', r.approved, 'access requests');
+  } catch (e) { console.warn('[Agent] access scan error', e.message); }
+}, FIVE_MIN);
+
+setInterval(() => {
+  try {
+    const r = agentService.monitorSLA();
+    if (r.escalated) console.log('[Agent] Escalated', r.escalated, 'tickets');
+  } catch (e) { console.warn('[Agent] sla monitor error', e.message); }
+}, TEN_MIN);
+
+setInterval(() => {
+  try {
+    const r = agentService.dispatchOnboardingReminders();
+    if (r.sent) console.log('[Agent] Sent', r.sent, 'onboarding reminders');
+  } catch (e) { console.warn('[Agent] reminder dispatch error', e.message); }
+}, FIFTEEN_MIN);

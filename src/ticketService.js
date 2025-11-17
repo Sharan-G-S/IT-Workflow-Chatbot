@@ -46,6 +46,23 @@ class TicketService {
     const stmt = db.prepare('UPDATE tickets SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
     return stmt.run(status, ticketId);
   }
+
+  updateTicket(ticketId, fields = {}) {
+    const allowed = ['title','description','priority','status','category','assignee','tags','escalated_at','escalation_level'];
+    const sets = [];
+    const params = [];
+    for (const key of allowed) {
+      if (Object.prototype.hasOwnProperty.call(fields, key)) {
+        sets.push(`${key} = ?`);
+        params.push(fields[key]);
+      }
+    }
+    if (!sets.length) return { changes: 0 };
+    const sql = `UPDATE tickets SET ${sets.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`;
+    params.push(ticketId);
+    const stmt = db.prepare(sql);
+    return stmt.run(...params);
+  }
 }
 
 module.exports = new TicketService();

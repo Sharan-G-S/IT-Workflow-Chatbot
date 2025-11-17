@@ -76,6 +76,39 @@ db.exec(`
 
   CREATE INDEX IF NOT EXISTS idx_conversations_user_id ON conversations(user_id);
   CREATE INDEX IF NOT EXISTS idx_conversations_created_at ON conversations(created_at);
+
+  /* Reminders for onboarding tasks & follow-ups */
+  CREATE TABLE IF NOT EXISTS reminders (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    checklist_id INTEGER,
+    item TEXT NOT NULL,
+    due_at DATETIME NOT NULL,
+    sent_at DATETIME,
+    status TEXT DEFAULT 'pending',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (checklist_id) REFERENCES onboarding_checklists(id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_reminders_due_at ON reminders(due_at);
+  CREATE INDEX IF NOT EXISTS idx_reminders_status ON reminders(status);
 `);
+
+// Ensure optional escalation columns exist (safe migrations)
+function ensureColumn(table, column, definition) {
+  const info = db.prepare(`PRAGMA table_info(${table})`).all();
+  if (!info.find(c => c.name === column)) {
+    db.prepare(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`).run();
+  }
+}
+
+try {
+  ensureColumn('tickets', 'escalated_at', 'DATETIME');
+  ensureColumn('tickets', 'escalation_level', 'INTEGER DEFAULT 0');
+  ensureColumn('access_requests', 'approved_at', 'DATETIME');
+  ensureColumn('access_requests', 'decision_reason', 'TEXT');
+} catch (e) {
+  console.warn('[DB Migration Warning]', e.message);
+}
 
 module.exports = db;
