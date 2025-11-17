@@ -2,6 +2,8 @@ const ITSupportAgent = require('./ITSupportAgent');
 const AccessManagementAgent = require('./AccessManagementAgent');
 const OnboardingAgent = require('./OnboardingAgent');
 const EscalationAgent = require('./EscalationAgent');
+const PerformanceMonitoringAgent = require('./PerformanceMonitoringAgent');
+const KnowledgeBaseAgent = require('./KnowledgeBaseAgent');
 
 /**
  * Agent Triage Router - Intelligent routing system for LangChain agents
@@ -11,6 +13,8 @@ class AgentTriageRouter {
   constructor(config = {}) {
     this.agents = [
       new EscalationAgent(config.escalation),
+      new PerformanceMonitoringAgent(config.performance),
+      new KnowledgeBaseAgent(config.knowledge),
       new ITSupportAgent(config.itSupport),
       new AccessManagementAgent(config.accessManagement),
       new OnboardingAgent(config.onboarding)
@@ -156,10 +160,12 @@ class AgentTriageRouter {
     let matches = 0;
     
     const agentKeywords = {
-      ITSupportAgent: ['error', 'bug', 'not working', 'computer', 'software', 'hardware'],
-      AccessManagementAgent: ['access', 'permission', 'login', 'account', 'authorize'],
-      OnboardingAgent: ['onboarding', 'new employee', 'setup', 'welcome', 'checklist'],
-      EscalationAgent: ['urgent', 'critical', 'emergency', 'escalate', 'production']
+      EscalationAgent: ['urgent', 'critical', 'emergency', 'escalate', 'production', 'outage'],
+      PerformanceMonitoringAgent: ['performance', 'slow', 'monitor', 'metrics', 'cpu', 'memory', 'optimization'],
+      KnowledgeBaseAgent: ['how to', 'procedure', 'policy', 'documentation', 'guide', 'help', 'information'],
+      ITSupportAgent: ['error', 'bug', 'not working', 'computer', 'software', 'hardware', 'technical'],
+      AccessManagementAgent: ['access', 'permission', 'login', 'account', 'authorize', 'security'],
+      OnboardingAgent: ['onboarding', 'new employee', 'setup', 'welcome', 'checklist', 'hire']
     };
     
     const keywords = agentKeywords[agent.name] || [];

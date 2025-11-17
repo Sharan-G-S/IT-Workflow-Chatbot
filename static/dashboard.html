@@ -3,254 +3,1007 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard - IT Workflow Chatbot</title>
-  <link rel="stylesheet" href="/style.css">
+  <title>IT Workflow Assistant - Dashboard</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary: #3b82f6;
+      --primary-dark: #2563eb;
+      --secondary: #64748b;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --light: #f8fafc;
+      --dark: #1e293b;
+      --border: #e2e8f0;
+      --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      --gradient-4: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+      --shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      color: var(--dark);
+    }
+
+    .navbar {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      padding: 1rem 2rem;
+      box-shadow: var(--shadow);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    .navbar-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .navbar-brand {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .navbar-user {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--light);
+      border-radius: 50px;
+      font-weight: 500;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .dashboard-header {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: var(--shadow-lg);
+      text-align: center;
+    }
+
+    .dashboard-header h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: var(--gradient-1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+    }
+
+    .dashboard-header p {
+      color: var(--secondary);
+      font-size: 1.1rem;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 2rem;
+      box-shadow: var(--shadow);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--gradient-1);
+    }
+
+    .stat-card:nth-child(2)::before { background: var(--gradient-2); }
+    .stat-card:nth-child(3)::before { background: var(--gradient-3); }
+    .stat-card:nth-child(4)::before { background: var(--gradient-4); }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .stat-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      color: white;
+      margin-bottom: 1rem;
+    }
+
+    .stat-card:nth-child(1) .stat-icon { background: var(--gradient-1); }
+    .stat-card:nth-child(2) .stat-icon { background: var(--gradient-2); }
+    .stat-card:nth-child(3) .stat-icon { background: var(--gradient-3); }
+    .stat-card:nth-child(4) .stat-icon { background: var(--gradient-4); }
+
+    .stat-value {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--dark);
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+      color: var(--secondary);
+      font-weight: 500;
+    }
+
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 280px;
+      height: 100vh;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      padding: 2rem 0;
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+      z-index: 2000;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .sidebar.active {
+      transform: translateX(0);
+    }
+
+    .sidebar-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1500;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .sidebar-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .sidebar-header {
+      padding: 0 2rem;
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .sidebar-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .sidebar-menu {
+      list-style: none;
+    }
+
+    .sidebar-item {
+      margin: 0.5rem 0;
+    }
+
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 2rem;
+      color: var(--dark);
+      text-decoration: none;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .sidebar-link:hover,
+    .sidebar-link.active {
+      background: rgba(59, 130, 246, 0.1);
+      color: var(--primary);
+    }
+
+    .sidebar-link.active::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: var(--primary);
+    }
+
+    .main-content {
+      margin-left: 0;
+      transition: margin-left 0.3s ease;
+      padding: 2rem;
+    }
+
+    .tab-content {
+      display: none;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 2rem;
+      box-shadow: var(--shadow-lg);
+      min-height: 600px;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      background: var(--secondary);
+      color: white;
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: white;
+    }
+
+    .btn-warning {
+      background: var(--warning);
+      color: white;
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 2px solid var(--primary);
+      color: var(--primary);
+    }
+
+    .btn-outline:hover {
+      background: var(--primary);
+      color: white;
+    }
+
+    .menu-toggle {
+      background: none;
+      border: none;
+      font-size: 1.25rem;
+      cursor: pointer;
+      padding: 0.5rem;
+      border-radius: 8px;
+      transition: background-color 0.3s ease;
+    }
+
+    .menu-toggle:hover {
+      background: var(--light);
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: var(--dark);
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      font-size: 0.9rem;
+      transition: border-color 0.3s ease;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .agent-card {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 15px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      box-shadow: var(--shadow);
+      transition: all 0.3s ease;
+    }
+
+    .agent-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .agent-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .agent-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      color: white;
+    }
+
+    .agent-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--dark);
+    }
+
+    .agent-status {
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-left: auto;
+    }
+
+    .status-active {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--success);
+    }
+
+    .status-inactive {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--danger);
+    }
+
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: white;
+      border-radius: 12px;
+      padding: 1rem 1.5rem;
+      box-shadow: var(--shadow-lg);
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+      z-index: 3000;
+      min-width: 300px;
+    }
+
+    .notification.show {
+      transform: translateX(0);
+    }
+
+    .notification.success {
+      border-left: 4px solid var(--success);
+    }
+
+    .notification.error {
+      border-left: 4px solid var(--danger);
+    }
+
+    .notification.warning {
+      border-left: 4px solid var(--warning);
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 1rem;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+
+      .sidebar {
+        width: 100%;
+      }
+    }
+
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid #f3f3f3;
+      border-top: 2px solid var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .gradient-text {
+      background: var(--gradient-1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .feature-card {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 15px;
+      padding: 2rem;
+      box-shadow: var(--shadow);
+      transition: all 0.3s ease;
+      text-align: center;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .feature-icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 1rem;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      color: white;
+    }
+  </style>
 </head>
-<body class="dashboard">
+<body>
+  <!-- Navbar -->
   <nav class="navbar">
     <div class="navbar-content">
-      <div class="navbar-brand">🤖 IT Workflow Assistant</div>
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <button class="menu-toggle" onclick="toggleSidebar()">
+          <i class="fas fa-bars"></i>
+        </button>
+        <div class="navbar-brand">
+          <i class="fas fa-robot"></i> IT Workflow Assistant
+        </div>
+      </div>
       <div class="navbar-user">
-        <span id="userName">Loading...</span>
-        <button class="btn btn-sm btn-secondary" onclick="logout()">Logout</button>
+        <div class="user-info">
+          <i class="fas fa-user-circle"></i>
+          <span id="userName">Loading...</span>
+        </div>
+        <button class="btn btn-secondary" onclick="logout()">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
       </div>
     </div>
   </nav>
 
+  <!-- Sidebar -->
+  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-title">Navigation</div>
+      <button class="menu-toggle" onclick="toggleSidebar()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <ul class="sidebar-menu">
+      <li class="sidebar-item">
+        <a href="#" class="sidebar-link active" onclick="switchTab('dashboard')">
+          <i class="fas fa-tachometer-alt"></i>
+          <span>Dashboard</span>
+        </a>
+      </li>
+      <li class="sidebar-item">
+        <a href="#" class="sidebar-link" onclick="switchTab('agents')">
+          <i class="fas fa-robot"></i>
+          <span>AI Agents</span>
+        </a>
+      </li>
+      <li class="sidebar-item">
+        <a href="#" class="sidebar-link" onclick="switchTab('tickets')">
+          <i class="fas fa-ticket-alt"></i>
+          <span>Tickets</span>
+        </a>
+      </li>
+      <li class="sidebar-item">
+        <a href="#" class="sidebar-link" onclick="switchTab('access')">
+          <i class="fas fa-key"></i>
+          <span>Access Requests</span>
+        </a>
+      </li>
+      <li class="sidebar-item">
+        <a href="#" class="sidebar-link" onclick="switchTab('onboarding')">
+          <i class="fas fa-user-plus"></i>
+          <span>Onboarding</span>
+        </a>
+      </li>
+      <li class="sidebar-item">
+        <a href="#" class="sidebar-link" onclick="switchTab('sla')">
+          <i class="fas fa-clock"></i>
+          <span>SLA Monitor</span>
+        </a>
+      </li>
+      <li class="sidebar-item">
+        <a href="#" class="sidebar-link" onclick="switchTab('hr-portal')">
+          <i class="fas fa-users"></i>
+          <span>HR Portal</span>
+        </a>
+      </li>
+      <li class="sidebar-item">
+        <a href="/chat.html" class="sidebar-link">
+          <i class="fas fa-comments"></i>
+          <span>Enhanced Chat</span>
+        </a>
+      </li>
+    </ul>
+  </aside>
+
+  <!-- Main Content -->
   <div class="container">
-    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
-      <h2 style="margin: 0 0 10px 0; color: white;">🚀 Try Enhanced Conversational AI Chat!</h2>
-      <p style="margin: 0 0 15px 0; opacity: 0.9;">Experience natural conversations with intent detection, conversation history, and smart suggestions</p>
-      <a href="/chat.html" class="btn btn-sm" style="background: white; color: #667eea;">Open Enhanced Chat →</a>
+    <!-- Dashboard Tab -->
+    <div id="dashboardTab" class="tab-content active">
+      <div class="dashboard-header">
+        <h1><i class="fas fa-chart-line"></i> Dashboard Overview</h1>
+        <p>Monitor your IT workflow and autonomous agent activities</p>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="fas fa-ticket-alt"></i>
+          </div>
+          <div class="stat-value" id="totalTickets">-</div>
+          <div class="stat-label">Total Tickets</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+          </div>
+          <div class="stat-value" id="overdueTickets">-</div>
+          <div class="stat-label">Overdue Tickets</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="fas fa-key"></i>
+          </div>
+          <div class="stat-value" id="pendingAccess">-</div>
+          <div class="stat-label">Pending Access</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="fas fa-user-plus"></i>
+          </div>
+          <div class="stat-value" id="activeOnboarding">-</div>
+          <div class="stat-label">Active Onboarding</div>
+        </div>
+      </div>
+
+      <div class="card-grid">
+        <div class="feature-card">
+          <div class="feature-icon" style="background: var(--gradient-1);">
+            <i class="fas fa-magic"></i>
+          </div>
+          <h3>Auto Ticket Generation</h3>
+          <p>AI automatically categorizes, prioritizes, and assigns tickets based on content analysis</p>
+          <button class="btn btn-primary" onclick="switchTab('tickets')">
+            <i class="fas fa-arrow-right"></i> Manage Tickets
+          </button>
+        </div>
+        
+        <div class="feature-card">
+          <div class="feature-icon" style="background: var(--gradient-2);">
+            <i class="fas fa-shield-alt"></i>
+          </div>
+          <h3>Smart Access Control</h3>
+          <p>Low-risk access requests are automatically approved with audit trails</p>
+          <button class="btn btn-primary" onclick="switchTab('access')">
+            <i class="fas fa-arrow-right"></i> View Access
+          </button>
+        </div>
+        
+        <div class="feature-card">
+          <div class="feature-icon" style="background: var(--gradient-3);">
+            <i class="fas fa-clock"></i>
+          </div>
+          <h3>SLA Monitoring</h3>
+          <p>Real-time SLA tracking with automatic escalation and notifications</p>
+          <button class="btn btn-primary" onclick="switchTab('sla')">
+            <i class="fas fa-arrow-right"></i> Monitor SLA
+          </button>
+        </div>
+        
+        <div class="feature-card">
+          <div class="feature-icon" style="background: var(--gradient-4);">
+            <i class="fas fa-tasks"></i>
+          </div>
+          <h3>Onboarding Automation</h3>
+          <p>Automated checklist generation and reminder system for new hires</p>
+          <button class="btn btn-primary" onclick="switchTab('onboarding')">
+            <i class="fas fa-arrow-right"></i> Manage Onboarding
+          </button>
+        </div>
+      </div>
     </div>
 
-    <!-- Agent Status Widget -->
-    <div class="card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; margin-bottom: 20px;">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <div>
-          <h3 style="margin: 0; color: white;">🤖 Autonomous Agents Status</h3>
-          <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 14px;">Real-time agent activity monitoring</p>
-        </div>
-        <button class="btn btn-sm" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);" onclick="refreshAgentStatus()">↻ Refresh</button>
+    <!-- AI Agents Tab -->
+    <div id="agentsTab" class="tab-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h2><i class="fas fa-robot"></i> AI Agent Orchestration</h2>
+        <button class="btn btn-primary" onclick="refreshAgents()">
+          <i class="fas fa-sync-alt"></i> Refresh Agents
+        </button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Describe your request:</label>
+        <textarea id="agentQuery" class="form-control" rows="4" placeholder="Describe your IT request and let our AI agents help you automatically..."></textarea>
       </div>
       
-      <div id="agentStatus" style="margin-top: 15px;">
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-          <div class="agent-stat">
-            <div style="font-size: 24px; font-weight: bold;" id="pendingAccessCount">-</div>
-            <div style="font-size: 12px; opacity: 0.8;">Pending Access Requests</div>
-          </div>
-          <div class="agent-stat">
-            <div style="font-size: 24px; font-weight: bold;" id="openTicketsCount">-</div>
-            <div style="font-size: 12px; opacity: 0.8;">Open Tickets</div>
-          </div>
-          <div class="agent-stat">
-            <div style="font-size: 24px; font-weight: bold;" id="overdueTicketsCount">-</div>
-            <div style="font-size: 12px; opacity: 0.8;">Overdue Tickets</div>
-          </div>
-          <div class="agent-stat">
-            <div style="font-size: 24px; font-weight: bold;" id="dueRemindersCount">-</div>
-            <div style="font-size: 12px; opacity: 0.8;">Due Reminders</div>
-          </div>
-        </div>
-        
-        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2);">
-          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <button class="btn btn-sm" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);" onclick="triggerAccessApproval()">🔄 Run Access Approval</button>
-            <button class="btn btn-sm" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);" onclick="triggerSLAEscalation()">⏰ Run SLA Check</button>
-            <button class="btn btn-sm" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);" onclick="triggerReminders()">📋 Send Reminders</button>
-          </div>
-        </div>
+      <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
+        <button class="btn btn-primary" onclick="orchestrateAgents()">
+          <i class="fas fa-play"></i> Process with AI
+        </button>
+        <button class="btn btn-outline" onclick="loadAgentAnalytics()">
+          <i class="fas fa-chart-bar"></i> View Analytics
+        </button>
       </div>
-    </div>
 
-    <div class="tabs">
-      <button class="tab active" onclick="switchTab('chat')">AI Chat</button>
-      <button class="tab" onclick="switchTab('tickets')">Tickets</button>
-      <button class="tab" onclick="switchTab('access')">Access Requests</button>
-      <button class="tab" onclick="switchTab('onboarding')">Onboarding</button>
-      <button class="tab" onclick="switchTab('agents')">LangChain Agents</button>
-    </div>
+      <div id="agentResponse" style="display: none;">
+        <h3>Agent Response</h3>
+        <div id="agentResponseContent"></div>
+      </div>
 
-    <!-- AI Chat Tab -->
-    <div id="chatTab" class="tab-content">
-      <div class="card">
-        <h2>AI-Powered Workflow Assistant</h2>
-        <p>Ask for help with tickets, access requests, or onboarding. The AI will automatically take action!</p>
-        
-        <div class="grid" style="margin-top:20px;">
-          <div class="card" style="background:#e3f2fd; border:2px solid #2196f3;">
-            <h3 style="color:#1976d2;">🎫 Need Access?</h3>
-            <p style="font-size:14px; color:#555;">Say: "I need access to Figma" and the bot will create an access request for you.</p>
+      <div id="agentAnalytics" style="display: none;">
+        <h3>Agent Analytics</h3>
+        <div id="agentAnalyticsContent"></div>
+      </div>
+
+      <div class="card-grid" style="margin-top: 2rem;">
+        <div class="agent-card">
+          <div class="agent-header">
+            <div class="agent-icon" style="background: var(--gradient-1);">
+              <i class="fas fa-tools"></i>
+            </div>
+            <div>
+              <div class="agent-title">IT Support Agent</div>
+              <div style="color: var(--secondary); font-size: 0.9rem;">Technical support specialist</div>
+            </div>
+            <div class="agent-status status-active">Active</div>
           </div>
-          <div class="card" style="background:#fff3e0; border:2px solid #ff9800;">
-            <h3 style="color:#f57c00;">👥 Onboarding</h3>
-            <p style="font-size:14px; color:#555;">Say: "Show onboarding checklist for new hire" to retrieve checklists.</p>
-          </div>
-          <div class="card" style="background:#e8f5e9; border:2px solid #4caf50;">
-            <h3 style="color:#388e3c;">📋 View Tickets</h3>
-            <p style="font-size:14px; color:#555;">Say: "Show open tickets from this week" to fetch data.</p>
-          </div>
+          <p>Handles hardware, software, and network issues with automatic ticket creation and priority assessment.</p>
         </div>
-
-        <div class="chat-interface">
-          <div class="form-group">
-            <label for="chatType">Choose Action Type</label>
-            <select id="chatType" class="form-control">
-              <option value="access">Request Access (creates access request)</option>
-              <option value="onboarding">Onboarding Info (retrieves checklists)</option>
-              <option value="tickets">View Tickets (IT staff)</option>
-            </select>
+        
+        <div class="agent-card">
+          <div class="agent-header">
+            <div class="agent-icon" style="background: var(--gradient-2);">
+              <i class="fas fa-shield-alt"></i>
+            </div>
+            <div>
+              <div class="agent-title">Access Management Agent</div>
+              <div style="color: var(--secondary); font-size: 0.9rem;">Security & permissions</div>
+            </div>
+            <div class="agent-status status-active">Active</div>
           </div>
-          
-          <div class="chat-messages" id="chatMessages"></div>
-          
-          <div class="chat-input-group">
-            <textarea id="chatInput" placeholder="Type your message here..." rows="3"></textarea>
-            <button class="btn btn-primary" onclick="sendMessage()">Send</button>
+          <p>Manages access requests with security risk assessment and automatic approval for low-risk resources.</p>
+        </div>
+        
+        <div class="agent-card">
+          <div class="agent-header">
+            <div class="agent-icon" style="background: var(--gradient-3);">
+              <i class="fas fa-user-plus"></i>
+            </div>
+            <div>
+              <div class="agent-title">Onboarding Agent</div>
+              <div style="color: var(--secondary); font-size: 0.9rem;">Employee setup</div>
+            </div>
+            <div class="agent-status status-active">Active</div>
           </div>
+          <p>Automates employee onboarding with dynamic checklist creation and reminder scheduling.</p>
+        </div>
+        
+        <div class="agent-card">
+          <div class="agent-header">
+            <div class="agent-icon" style="background: var(--gradient-4);">
+              <i class="fas fa-exclamation-circle"></i>
+            </div>
+            <div>
+              <div class="agent-title">Escalation Agent</div>
+              <div style="color: var(--secondary); font-size: 0.9rem;">Critical issue handler</div>
+            </div>
+            <div class="agent-status status-active">Active</div>
+          </div>
+          <p>Handles critical issues, SLA violations, and coordinates escalation notifications.</p>
+        </div>
+        
+        <div class="agent-card">
+          <div class="agent-header">
+            <div class="agent-icon" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);">
+              <i class="fas fa-tachometer-alt"></i>
+            </div>
+            <div>
+              <div class="agent-title">Performance Monitoring Agent</div>
+              <div style="color: var(--secondary); font-size: 0.9rem;">System performance & optimization</div>
+            </div>
+            <div class="agent-status status-active">Active</div>
+          </div>
+          <p>Monitors system performance, identifies bottlenecks, and provides optimization recommendations.</p>
+        </div>
+        
+        <div class="agent-card">
+          <div class="agent-header">
+            <div class="agent-icon" style="background: linear-gradient(135deg, #a55eea 0%, #8b5cf6 100%);">
+              <i class="fas fa-book"></i>
+            </div>
+            <div>
+              <div class="agent-title">Knowledge Base Agent</div>
+              <div style="color: var(--secondary); font-size: 0.9rem;">Documentation & guidance</div>
+            </div>
+            <div class="agent-status status-active">Active</div>
+          </div>
+          <p>Provides instant access to IT knowledge, procedures, policies, and troubleshooting guides.</p>
         </div>
       </div>
     </div>
 
     <!-- Tickets Tab -->
-    <div id="ticketsTab" class="tab-content" style="display:none;">
-      <div class="card">
-        <h2>IT Tickets</h2>
-        <button class="btn btn-success btn-sm" onclick="showCreateTicket()" style="float:right; margin-top:-40px;">+ New Ticket</button>
-        
-        <div id="createTicketForm" style="display:none; margin-top:20px; padding:20px; border:2px dashed #ddd; border-radius:8px;">
-          <h3>Create New Ticket</h3>
-          <div class="form-group">
-            <label>Title</label>
-            <input type="text" id="ticketTitle" placeholder="Brief issue description">
-          </div>
-          <div class="form-group">
-            <label>Description</label>
-            <textarea id="ticketDesc" rows="3" placeholder="Detailed description"></textarea>
-          </div>
-          <div class="form-group">
-            <label>Priority</label>
-            <select id="ticketPriority">
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-            </select>
-          </div>
-          <button class="btn btn-primary" onclick="createTicket()">Submit Ticket</button>
-          <button class="btn btn-secondary" onclick="document.getElementById('createTicketForm').style.display='none'">Cancel</button>
-        </div>
-        
-        <div id="ticketsList" style="margin-top:20px;"></div>
+    <div id="ticketsTab" class="tab-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h2><i class="fas fa-ticket-alt"></i> Smart Ticket Management</h2>
+        <button class="btn btn-success" onclick="showCreateTicket()">
+          <i class="fas fa-plus"></i> Create Ticket
+        </button>
       </div>
+
+      <div class="form-group">
+        <label class="form-label">Auto-Generate Ticket (AI Powered)</label>
+        <textarea id="ticketDescription" class="form-control" rows="3" placeholder="Describe your issue and AI will automatically categorize, prioritize, and assign it..."></textarea>
+        <button class="btn btn-primary" onclick="autoGenerateTicket()" style="margin-top: 0.5rem;">
+          <i class="fas fa-magic"></i> Auto-Generate Ticket
+        </button>
+      </div>
+
+      <div id="ticketsList"></div>
     </div>
 
     <!-- Access Requests Tab -->
-    <div id="accessTab" class="tab-content" style="display:none;">
-      <div class="card">
-        <h2>Access Requests</h2>
-        <button class="btn btn-success btn-sm" onclick="showCreateAccess()" style="float:right; margin-top:-40px;">+ New Request</button>
-        
-        <div id="createAccessForm" style="display:none; margin-top:20px; padding:20px; border:2px dashed #ddd; border-radius:8px;">
-          <h3>Request Access</h3>
-          <div class="form-group">
-            <label>Resource Name</label>
-            <input type="text" id="accessResource" placeholder="e.g., Figma, GitHub, AWS">
-          </div>
-          <div class="form-group">
-            <label>Access Type</label>
-            <select id="accessType">
-              <option value="read">Read</option>
-              <option value="write">Write</option>
-              <option value="admin">Admin</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Justification</label>
-            <textarea id="accessJustification" rows="3" placeholder="Why do you need this access?"></textarea>
-          </div>
-          <button class="btn btn-primary" onclick="createAccessRequest()">Submit Request</button>
-          <button class="btn btn-secondary" onclick="document.getElementById('createAccessForm').style.display='none'">Cancel</button>
-        </div>
-        
-        <div id="accessList" style="margin-top:20px;"></div>
+    <div id="accessTab" class="tab-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h2><i class="fas fa-key"></i> Smart Access Management</h2>
+        <button class="btn btn-success" onclick="showCreateAccess()">
+          <i class="fas fa-plus"></i> Request Access
+        </button>
       </div>
+
+      <div class="form-group">
+        <label class="form-label">Quick Access Request</label>
+        <div style="display: flex; gap: 1rem;">
+          <input type="text" id="accessResource" class="form-control" placeholder="Resource name (e.g., Figma, Slack, GitHub)">
+          <button class="btn btn-primary" onclick="quickAccessRequest()">
+            <i class="fas fa-key"></i> Request Access
+          </button>
+        </div>
+        <small style="color: var(--secondary);">Low-risk resources are automatically approved</small>
+      </div>
+
+      <div id="accessList"></div>
     </div>
 
     <!-- Onboarding Tab -->
-    <div id="onboardingTab" class="tab-content" style="display:none;">
-      <div class="card">
-        <h2>Onboarding Checklists</h2>
-        <button class="btn btn-success btn-sm" onclick="showCreateOnboarding()" style="float:right; margin-top:-40px;">+ New Checklist</button>
-        
-        <div id="createOnboardingForm" style="display:none; margin-top:20px; padding:20px; border:2px dashed #ddd; border-radius:8px;">
-          <h3>Create Onboarding Checklist</h3>
-          <div class="form-group">
-            <label>Employee Name</label>
-            <input type="text" id="onboardingName" placeholder="New hire name">
-          </div>
-          <div class="form-group">
-            <label>Role</label>
-            <input type="text" id="onboardingRole" placeholder="e.g., Software Engineer">
-          </div>
-          <div class="form-group">
-            <label>Checklist Items (one per line)</label>
-            <textarea id="onboardingItems" rows="4" placeholder="Setup workstation&#10;Create email account&#10;Assign mentor&#10;Schedule training"></textarea>
-          </div>
-          <button class="btn btn-primary" onclick="createOnboarding()">Create Checklist</button>
-          <button class="btn btn-secondary" onclick="document.getElementById('createOnboardingForm').style.display='none'">Cancel</button>
-        </div>
-        
-        <div id="onboardingList" style="margin-top:20px;"></div>
+    <div id="onboardingTab" class="tab-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h2><i class="fas fa-user-plus"></i> Smart Onboarding</h2>
+        <button class="btn btn-success" onclick="showCreateOnboarding()">
+          <i class="fas fa-plus"></i> New Onboarding
+        </button>
       </div>
+
+      <div class="form-group">
+        <label class="form-label">Quick Onboarding Setup</label>
+        <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+          <input type="text" id="onboardingName" class="form-control" placeholder="Employee name">
+          <input type="text" id="onboardingRole" class="form-control" placeholder="Role (e.g., Software Engineer)">
+          <button class="btn btn-primary" onclick="autoGenerateOnboarding()">
+            <i class="fas fa-magic"></i> Auto-Generate
+          </button>
+        </div>
+        <small style="color: var(--secondary);">AI will create role-specific checklists with due dates and reminders</small>
+      </div>
+
+      <div id="onboardingList"></div>
     </div>
 
-    <!-- LangChain Agents Tab -->
-    <div id="agentsTab" class="tab-content" style="display:none;">
-      <div class="card">
-        <h2>LangChain Agent Orchestration</h2>
-        <div style="margin-bottom: 20px;">
-          <h3>Agent Triage System</h3>
-          <p>Our intelligent triage system routes your requests to specialized LangChain agents:</p>
-          <ul>
-            <li><strong>IT Support Agent:</strong> Hardware, software, and network issues</li>
-            <li><strong>Access Management Agent:</strong> Permission requests and access control</li>
-            <li><strong>Onboarding Agent:</strong> New employee setup and checklists</li>
-            <li><strong>Escalation Agent:</strong> Critical issues and SLA violations</li>
-          </ul>
+    <!-- SLA Monitoring Tab -->
+    <div id="slaTab" class="tab-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h2><i class="fas fa-clock"></i> SLA Monitoring & Escalation</h2>
+        <button class="btn btn-primary" onclick="refreshSLA()">
+          <i class="fas fa-sync-alt"></i> Refresh
+        </button>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon" style="background: var(--success);">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <div class="stat-value" id="slaCompliant">-</div>
+          <div class="stat-label">SLA Compliant</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background: var(--warning);">
+            <i class="fas fa-exclamation-triangle"></i>
+          </div>
+          <div class="stat-value" id="slaWarning">-</div>
+          <div class="stat-label">Approaching SLA</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background: var(--danger);">
+            <i class="fas fa-times-circle"></i>
+          </div>
+          <div class="stat-value" id="slaViolation">-</div>
+          <div class="stat-label">SLA Violations</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background: var(--primary);">
+            <i class="fas fa-arrow-up"></i>
+          </div>
+          <div class="stat-value" id="autoEscalated">-</div>
+          <div class="stat-label">Auto-Escalated</div>
+        </div>
+      </div>
+
+      <div id="slaList"></div>
+    </div>
+
+    <!-- HR Portal Tab -->
+    <div id="hr-portalTab" class="tab-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h2><i class="fas fa-users"></i> HR Portal - Comprehensive View</h2>
+        <button class="btn btn-primary" onclick="refreshHRData()">
+          <i class="fas fa-sync-alt"></i> Refresh Data
+        </button>
+      </div>
+
+      <div class="card-grid">
+        <div class="feature-card">
+          <div class="feature-icon" style="background: var(--gradient-1);">
+            <i class="fas fa-chart-pie"></i>
+          </div>
+          <h3>Ticket Analytics</h3>
+          <div id="hrTicketStats"></div>
         </div>
         
-        <div class="form-group">
-          <label>Describe your request:</label>
-          <textarea id="agentQuery" rows="4" placeholder="Describe your IT request and let our agents help you automatically..."></textarea>
+        <div class="feature-card">
+          <div class="feature-icon" style="background: var(--gradient-2);">
+            <i class="fas fa-key"></i>
+          </div>
+          <h3>Access Requests</h3>
+          <div id="hrAccessStats"></div>
         </div>
         
-        <button class="btn btn-primary" onclick="orchestrateAgents()">Process with Agents</button>
-        <button class="btn btn-secondary" onclick="loadAgentAnalytics()" style="margin-left: 10px;">View Analytics</button>
-        
-        <div id="agentResponse" style="margin-top:20px; display:none;">
-          <h3>Agent Response</h3>
-          <div id="agentResponseContent"></div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background: var(--gradient-3);">
+            <i class="fas fa-user-plus"></i>
+          </div>
+          <h3>Onboarding Progress</h3>
+          <div id="hrOnboardingStats"></div>
         </div>
         
-        <div id="agentAnalytics" style="margin-top:20px; display:none;">
-          <h3>Agent Analytics</h3>
-          <div id="agentAnalyticsContent"></div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background: var(--gradient-4);">
+            <i class="fas fa-clock"></i>
+          </div>
+          <h3>SLA Performance</h3>
+          <div id="hrSLAStats"></div>
         </div>
+      </div>
+
+      <div style="margin-top: 2rem;">
+        <h3>Detailed Reports</h3>
+        <div id="hrDetailedReports"></div>
       </div>
     </div>
   </div>
 
+  <!-- Notification Container -->
+  <div id="notificationContainer"></div>
+
   <script>
     let currentUser = null;
+    let sidebarOpen = false;
 
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      checkAuth();
+      loadDashboardStats();
+      refreshSLA();
+      setInterval(loadDashboardStats, 30000); // Refresh every 30 seconds
+    });
+
+    // Authentication
     async function checkAuth() {
       try {
         const res = await fetch('/api/auth/me', { credentials: 'include' });
-        if (!res.ok) {
-          window.location.href = '/login.html';
-          return;
-        }
+        if (!res.ok) throw new Error('Not authenticated');
+        
         const data = await res.json();
         currentUser = data.user;
         document.getElementById('userName').textContent = data.user.full_name || data.user.email;
@@ -264,336 +1017,107 @@
       window.location.href = '/login.html';
     }
 
-    function switchTab(tab) {
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
-      event.target.classList.add('active');
-      document.getElementById(tab + 'Tab').style.display = 'block';
+    // Sidebar functions
+    function toggleSidebar() {
+      sidebarOpen = !sidebarOpen;
+      document.querySelector('.sidebar').classList.toggle('active', sidebarOpen);
+      document.querySelector('.sidebar-overlay').classList.toggle('active', sidebarOpen);
+    }
+
+    // Tab switching
+    function switchTab(tabName) {
+      // Remove active class from all tabs and sidebar links
+      document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      document.querySelectorAll('.sidebar-link').forEach(link => {
+        link.classList.remove('active');
+      });
+
+      // Show selected tab
+      document.getElementById(tabName + 'Tab').classList.add('active');
       
-      if (tab === 'tickets') loadTickets();
-      if (tab === 'access') loadAccessRequests();
-      if (tab === 'onboarding') loadOnboarding();
-      if (tab === 'agents') loadAvailableAgents();
-    }
+      // Update sidebar active state
+      const activeLink = document.querySelector(`[onclick="switchTab('${tabName}')"]`);
+      if (activeLink) activeLink.classList.add('active');
 
-    // Chat functions
-    async function sendMessage() {
-      const input = document.getElementById('chatInput');
-      const type = document.getElementById('chatType').value;
-      const message = input.value.trim();
-      if (!message) return;
-
-      addMessage(message, 'user');
-      input.value = '';
-
-      try {
-        const endpoint = `/api/chat/${type}`;
-        const res = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ message })
-        });
-        
-        const data = await res.json();
-        
-        if (res.ok) {
-          let responseText = data.aiResponse;
-          if (data.action === 'access_request_created') {
-            responseText += `\n\n✅ Access request created! Request ID: ${data.requestId} for ${data.resourceName}`;
-          } else if (data.action === 'tickets_retrieved') {
-            responseText += `\n\n📋 Found ${data.tickets.length} ticket(s)`;
-          } else if (data.action === 'onboarding_info_retrieved') {
-            responseText += `\n\n👥 Found ${data.existingChecklists.length} checklist(s)`;
-          }
-          addMessage(responseText, 'bot');
-        } else {
-          addMessage('Error: ' + (data.error || 'Unknown error'), 'bot');
-        }
-      } catch (err) {
-        addMessage('Network error. Please try again.', 'bot');
-      }
-    }
-
-    function addMessage(text, sender) {
-      const div = document.createElement('div');
-      div.className = `message message-${sender}`;
-      div.textContent = text;
-      document.getElementById('chatMessages').appendChild(div);
-      div.scrollIntoView({ behavior: 'smooth' });
-    }
-
-    // Ticket functions
-    function showCreateTicket() {
-      document.getElementById('createTicketForm').style.display = 'block';
-    }
-
-    async function createTicket() {
-      const title = document.getElementById('ticketTitle').value;
-      const description = document.getElementById('ticketDesc').value;
-      const priority = document.getElementById('ticketPriority').value;
-      
-      if (!title) return alert('Title required');
-      
-      try {
-        const res = await fetch('/api/tickets', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ title, description, priority })
-        });
-        
-        if (res.ok) {
-          alert('Ticket created!');
-          document.getElementById('createTicketForm').style.display = 'none';
-          document.getElementById('ticketTitle').value = '';
-          document.getElementById('ticketDesc').value = '';
+      // Load tab-specific data
+      switch(tabName) {
+        case 'tickets':
           loadTickets();
-        }
-      } catch (err) {
-        alert('Error creating ticket');
-      }
-    }
-
-    async function loadTickets() {
-      try {
-        const res = await fetch('/api/tickets', { credentials: 'include' });
-        const data = await res.json();
-        const list = document.getElementById('ticketsList');
-        
-        if (data.tickets.length === 0) {
-          list.innerHTML = '<div class="empty-state">No tickets found</div>';
-          return;
-        }
-        
-        list.innerHTML = data.tickets.map(t => `
-          <div class="list-item">
-            <div class="list-item-header">
-              <div>
-                <div class="list-item-title">${t.title}</div>
-                <div class="list-item-meta">${new Date(t.created_at).toLocaleString()}</div>
-              </div>
-              <div>
-                <span class="badge badge-${t.status}">${t.status}</span>
-                <span class="badge badge-${t.priority}">${t.priority}</span>
-              </div>
-            </div>
-            <p style="margin-top:8px; color:#666;">${t.description || 'No description'}</p>
-          </div>
-        `).join('');
-      } catch (err) {
-        console.error(err);
-      }
-    }
-
-    // Access request functions
-    function showCreateAccess() {
-      document.getElementById('createAccessForm').style.display = 'block';
-    }
-
-    async function createAccessRequest() {
-      const resourceName = document.getElementById('accessResource').value;
-      const accessType = document.getElementById('accessType').value;
-      const justification = document.getElementById('accessJustification').value;
-      
-      if (!resourceName) return alert('Resource name required');
-      
-      try {
-        const res = await fetch('/api/access-requests', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ resourceName, accessType, justification })
-        });
-        
-        if (res.ok) {
-          alert('Access request created!');
-          document.getElementById('createAccessForm').style.display = 'none';
-          document.getElementById('accessResource').value = '';
-          document.getElementById('accessJustification').value = '';
+          break;
+        case 'access':
           loadAccessRequests();
-        }
-      } catch (err) {
-        alert('Error creating request');
-      }
-    }
-
-    async function loadAccessRequests() {
-      try {
-        const res = await fetch('/api/access-requests', { credentials: 'include' });
-        const data = await res.json();
-        const list = document.getElementById('accessList');
-        
-        if (data.requests.length === 0) {
-          list.innerHTML = '<div class="empty-state">No access requests found</div>';
-          return;
-        }
-        
-        list.innerHTML = data.requests.map(r => `
-          <div class="list-item">
-            <div class="list-item-header">
-              <div>
-                <div class="list-item-title">${r.resource_name} (${r.access_type})</div>
-                <div class="list-item-meta">${new Date(r.created_at).toLocaleString()}</div>
-              </div>
-              <span class="badge badge-${r.status}">${r.status}</span>
-            </div>
-            <p style="margin-top:8px; color:#666;">${r.justification || 'No justification'}</p>
-          </div>
-        `).join('');
-      } catch (err) {
-        console.error(err);
-      }
-    }
-
-    // Onboarding functions
-    function showCreateOnboarding() {
-      document.getElementById('createOnboardingForm').style.display = 'block';
-    }
-
-    async function createOnboarding() {
-      const employeeName = document.getElementById('onboardingName').value;
-      const role = document.getElementById('onboardingRole').value;
-      const items = document.getElementById('onboardingItems').value.split('\n').filter(x => x.trim());
-      
-      if (!employeeName) return alert('Employee name required');
-      
-      try {
-        const res = await fetch('/api/onboarding', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ employeeName, role, checklistItems: items })
-        });
-        
-        if (res.ok) {
-          alert('Onboarding checklist created!');
-          document.getElementById('createOnboardingForm').style.display = 'none';
-          document.getElementById('onboardingName').value = '';
-          document.getElementById('onboardingRole').value = '';
-          document.getElementById('onboardingItems').value = '';
+          break;
+        case 'onboarding':
           loadOnboarding();
+          break;
+        case 'agents':
+          loadAvailableAgents();
+          break;
+        case 'sla':
+          refreshSLA();
+          break;
+        case 'hr-portal':
+          refreshHRData();
+          break;
+      }
+
+      // Close sidebar on mobile
+      if (window.innerWidth <= 768) {
+        toggleSidebar();
+      }
+    }
+
+    // Dashboard stats
+    async function loadDashboardStats() {
+      try {
+        const [tickets, access, onboarding] = await Promise.all([
+          fetch('/api/tickets', { credentials: 'include' }).then(r => r.json()),
+          fetch('/api/access-requests', { credentials: 'include' }).then(r => r.json()),
+          fetch('/api/onboarding', { credentials: 'include' }).then(r => r.json())
+        ]);
+
+        if (tickets.success) {
+          const total = tickets.tickets.length;
+          const overdue = tickets.tickets.filter(t => {
+            const created = new Date(t.created_at);
+            const hoursSince = (Date.now() - created) / (1000 * 60 * 60);
+            return hoursSince > 24 && t.status !== 'resolved';
+          }).length;
+          
+          document.getElementById('totalTickets').textContent = total;
+          document.getElementById('overdueTickets').textContent = overdue;
+        }
+
+        if (access.success) {
+          const pending = access.requests.filter(r => r.status === 'pending').length;
+          document.getElementById('pendingAccess').textContent = pending;
+        }
+
+        if (onboarding.success) {
+          const active = onboarding.checklists.filter(c => c.status !== 'completed').length;
+          document.getElementById('activeOnboarding').textContent = active;
         }
       } catch (err) {
-        alert('Error creating checklist');
+        console.error('Failed to load dashboard stats:', err);
       }
     }
 
-    async function loadOnboarding() {
-      try {
-        const res = await fetch('/api/onboarding', { credentials: 'include' });
-        const data = await res.json();
-        const list = document.getElementById('onboardingList');
-        
-        if (data.checklists.length === 0) {
-          list.innerHTML = '<div class="empty-state">No onboarding checklists found</div>';
-          return;
-        }
-        
-        list.innerHTML = data.checklists.map(c => `
-          <div class="list-item">
-            <div class="list-item-header">
-              <div>
-                <div class="list-item-title">${c.employee_name} - ${c.role || 'No role'}</div>
-                <div class="list-item-meta">${new Date(c.created_at).toLocaleString()}</div>
-              </div>
-              <span class="badge badge-${c.status}">${c.status}</span>
-            </div>
-            <div style="margin-top:12px;">
-              <strong>Checklist:</strong>
-              <ul style="margin-top:8px; padding-left:20px;">
-                ${c.checklist_items.map(item => `<li>${item}</li>`).join('')}
-              </ul>
-            </div>
-          </div>
-        `).join('');
-      } catch (err) {
-        console.error(err);
-      }
-    }
-
-    // Agent Status Functions
-    async function refreshAgentStatus() {
-      try {
-        const res = await fetch('/api/agents/status', { credentials: 'include' });
-        const data = await res.json();
-        const status = data.status;
-        
-        document.getElementById('pendingAccessCount').textContent = status.pendingAccess;
-        document.getElementById('openTicketsCount').textContent = status.openTickets;
-        document.getElementById('overdueTicketsCount').textContent = status.overdueTickets;
-        document.getElementById('dueRemindersCount').textContent = status.dueReminders;
-      } catch (err) {
-        console.error('Failed to refresh agent status:', err);
-      }
-    }
-
-    async function triggerAccessApproval() {
-      try {
-        const res = await fetch('/api/access-requests/approve/pending', { 
-          method: 'POST', 
-          credentials: 'include' 
-        });
-        const data = await res.json();
-        alert(`Access approval scan completed. Approved: ${data.result.approved}/${data.result.scanned} requests`);
-        refreshAgentStatus();
-        if (getCurrentTab() === 'access') loadAccessRequests();
-      } catch (err) {
-        alert('Error running access approval');
-      }
-    }
-
-    async function triggerSLAEscalation() {
-      try {
-        const res = await fetch('/api/tickets/escalate/run', { 
-          method: 'POST', 
-          credentials: 'include' 
-        });
-        const data = await res.json();
-        alert(`SLA escalation completed. Escalated: ${data.result.escalated}/${data.result.scanned} tickets`);
-        refreshAgentStatus();
-        if (getCurrentTab() === 'tickets') loadTickets();
-      } catch (err) {
-        alert('Error running SLA escalation');
-      }
-    }
-
-    async function triggerReminders() {
-      try {
-        const res = await fetch('/api/onboarding/reminders/run', { 
-          method: 'POST', 
-          credentials: 'include' 
-        });
-        const data = await res.json();
-        alert(`Reminder dispatch completed. Sent: ${data.result.sent}/${data.result.scanned} reminders`);
-        refreshAgentStatus();
-      } catch (err) {
-        alert('Error sending reminders');
-      }
-    }
-
-    function getCurrentTab() {
-      if (document.getElementById('chatTab').style.display !== 'none') return 'chat';
-      if (document.getElementById('ticketsTab').style.display !== 'none') return 'tickets';
-      if (document.getElementById('accessTab').style.display !== 'none') return 'access';
-      if (document.getElementById('onboardingTab').style.display !== 'none') return 'onboarding';
-      return 'chat';
-    }
-
-    // Agent Orchestration Functions
+    // Agent functions
     async function orchestrateAgents() {
-      const query = document.getElementById('agentQuery').value;
-      if (!query.trim()) {
-        alert('Please enter a request');
+      const query = document.getElementById('agentQuery').value.trim();
+      if (!query) {
+        showNotification('Please enter a request', 'error');
         return;
       }
-      
+
       const responseDiv = document.getElementById('agentResponse');
       const contentDiv = document.getElementById('agentResponseContent');
       
       responseDiv.style.display = 'block';
-      contentDiv.innerHTML = '<p>Processing your request with LangChain agents...</p>';
-      
+      contentDiv.innerHTML = '<div class="loading"></div> Processing your request with AI agents...';
+
       try {
         const res = await fetch('/api/agents/orchestrate', {
           method: 'POST',
@@ -601,44 +1125,47 @@
           credentials: 'include',
           body: JSON.stringify({ query })
         });
-        
+
         const result = await res.json();
-        
+
         if (result.success) {
           let html = `
-            <div style="background: #f0f9ff; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-              <h4>Routing Decision</h4>
+            <div class="agent-card">
+              <h4><i class="fas fa-route"></i> Routing Decision</h4>
               <p><strong>Selected Agent:</strong> ${result.routing.agent}</p>
               <p><strong>Confidence:</strong> ${(result.routing.confidence * 100).toFixed(1)}%</p>
               <p><strong>Reason:</strong> ${result.routing.reason}</p>
             </div>
           `;
-          
+
           if (result.routing.multiAgent && result.routing.agents.length > 1) {
             html += `
-              <div style="background: #fff7ed; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                <h4>Multi-Agent Execution</h4>
+              <div class="agent-card">
+                <h4><i class="fas fa-users"></i> Multi-Agent Execution</h4>
                 <p><strong>Agents Used:</strong> ${result.routing.agents.join(', ')}</p>
               </div>
             `;
           }
-          
+
           html += `
-            <div style="background: #f0fdf4; padding: 15px; border-radius: 8px;">
-              <h4>Agent Response</h4>
+            <div class="agent-card">
+              <h4><i class="fas fa-robot"></i> Agent Response</h4>
               <p>${result.response.replace(/\n/g, '<br>')}</p>
             </div>
           `;
-          
+
           contentDiv.innerHTML = html;
+          showNotification('Request processed successfully!', 'success');
         } else {
-          contentDiv.innerHTML = `<p style="color: red;">Error: ${result.error}</p>`;
+          contentDiv.innerHTML = `<div style="color: var(--danger);"><i class="fas fa-exclamation-triangle"></i> Error: ${result.error}</div>`;
+          showNotification(result.error, 'error');
         }
       } catch (err) {
-        contentDiv.innerHTML = `<p style="color: red;">Failed to process request: ${err.message}</p>`;
+        contentDiv.innerHTML = `<div style="color: var(--danger);"><i class="fas fa-exclamation-triangle"></i> Failed to process request: ${err.message}</div>`;
+        showNotification('Failed to process request', 'error');
       }
     }
-    
+
     async function loadAvailableAgents() {
       try {
         const res = await fetch('/api/agents/available', { credentials: 'include' });
@@ -646,59 +1173,442 @@
         
         if (agents.success) {
           console.log('Available agents loaded:', agents.agents);
+          showNotification('Agents loaded successfully', 'success');
         }
       } catch (err) {
         console.error('Failed to load agents:', err);
+        showNotification('Failed to load agents', 'error');
       }
     }
-    
+
     async function loadAgentAnalytics() {
       const analyticsDiv = document.getElementById('agentAnalytics');
       const contentDiv = document.getElementById('agentAnalyticsContent');
       
       analyticsDiv.style.display = 'block';
-      contentDiv.innerHTML = '<p>Loading agent analytics...</p>';
-      
+      contentDiv.innerHTML = '<div class="loading"></div> Loading agent analytics...';
+
       try {
         const res = await fetch('/api/agents/analytics', { credentials: 'include' });
         const data = await res.json();
-        
+
         if (data.success) {
           let html = `
-            <div style="background: #f8fafc; padding: 15px; border-radius: 8px;">
-              <h4>Routing Statistics</h4>
+            <div class="agent-card">
+              <h4><i class="fas fa-chart-bar"></i> Routing Statistics</h4>
               <p><strong>Total Requests:</strong> ${data.analytics.totalRequests}</p>
               <p><strong>Average Confidence:</strong> ${(data.analytics.averageConfidence * 100).toFixed(1)}%</p>
             </div>
           `;
-          
+
           if (data.analytics.agentUsage && Object.keys(data.analytics.agentUsage).length > 0) {
-            html += '<h4>Agent Usage:</h4><ul>';
+            html += '<div class="agent-card"><h4><i class="fas fa-users"></i> Agent Usage:</h4><ul>';
             for (const [agent, count] of Object.entries(data.analytics.agentUsage)) {
               html += `<li><strong>${agent}:</strong> ${count} requests</li>`;
             }
-            html += '</ul>';
+            html += '</ul></div>';
           }
-          
+
           contentDiv.innerHTML = html;
         } else {
-          contentDiv.innerHTML = `<p style="color: red;">Error: ${data.error}</p>`;
+          contentDiv.innerHTML = `<div style="color: var(--danger);"><i class="fas fa-exclamation-triangle"></i> Error: ${data.error}</div>`;
         }
       } catch (err) {
-        contentDiv.innerHTML = `<p style="color: red;">Failed to load analytics: ${err.message}</p>`;
+        contentDiv.innerHTML = `<div style="color: var(--danger);"><i class="fas fa-exclamation-triangle"></i> Failed to load analytics: ${err.message}</div>`;
       }
     }
 
-    // Auto-refresh agent status every 30 seconds
-    setInterval(refreshAgentStatus, 30000);
+    function refreshAgents() {
+      loadAvailableAgents();
+      loadAgentAnalytics();
+    }
 
-    // Load initial agent status when page loads
-    document.addEventListener('DOMContentLoaded', () => {
-      setTimeout(refreshAgentStatus, 1000);
-    });
+    // Auto ticket generation
+    async function autoGenerateTicket() {
+      const description = document.getElementById('ticketDescription').value.trim();
+      if (!description) {
+        showNotification('Please enter a ticket description', 'error');
+        return;
+      }
 
-    // Initialize
-    checkAuth();
+      try {
+        const res = await fetch('/api/agents/orchestrate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ 
+            query: `Create a ticket for: ${description}`,
+            forceAgent: 'ITSupportAgent'
+          })
+        });
+
+        const result = await res.json();
+        if (result.success) {
+          showNotification('Ticket auto-generated successfully!', 'success');
+          document.getElementById('ticketDescription').value = '';
+          loadTickets();
+        } else {
+          showNotification(result.error, 'error');
+        }
+      } catch (err) {
+        showNotification('Failed to auto-generate ticket', 'error');
+      }
+    }
+
+    // Quick access request
+    async function quickAccessRequest() {
+      const resource = document.getElementById('accessResource').value.trim();
+      if (!resource) {
+        showNotification('Please enter a resource name', 'error');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/agents/orchestrate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ 
+            query: `I need access to ${resource}`,
+            forceAgent: 'AccessManagementAgent'
+          })
+        });
+
+        const result = await res.json();
+        if (result.success) {
+          showNotification('Access request processed!', 'success');
+          document.getElementById('accessResource').value = '';
+          loadAccessRequests();
+        } else {
+          showNotification(result.error, 'error');
+        }
+      } catch (err) {
+        showNotification('Failed to process access request', 'error');
+      }
+    }
+
+    // Auto onboarding generation
+    async function autoGenerateOnboarding() {
+      const name = document.getElementById('onboardingName').value.trim();
+      const role = document.getElementById('onboardingRole').value.trim();
+      
+      if (!name || !role) {
+        showNotification('Please enter both name and role', 'error');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/agents/orchestrate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ 
+            query: `Create onboarding checklist for ${name} as ${role}`,
+            forceAgent: 'OnboardingAgent'
+          })
+        });
+
+        const result = await res.json();
+        if (result.success) {
+          showNotification('Onboarding checklist auto-generated!', 'success');
+          document.getElementById('onboardingName').value = '';
+          document.getElementById('onboardingRole').value = '';
+          loadOnboarding();
+        } else {
+          showNotification(result.error, 'error');
+        }
+      } catch (err) {
+        showNotification('Failed to auto-generate onboarding', 'error');
+      }
+    }
+
+    // SLA monitoring
+    async function refreshSLA() {
+      try {
+        const res = await fetch('/api/tickets', { credentials: 'include' });
+        const data = await res.json();
+        
+        if (data.success) {
+          const tickets = data.tickets;
+          let compliant = 0, warning = 0, violation = 0, escalated = 0;
+          
+          tickets.forEach(ticket => {
+            const created = new Date(ticket.created_at);
+            const hoursSince = (Date.now() - created) / (1000 * 60 * 60);
+            
+            if (ticket.status === 'resolved') {
+              compliant++;
+            } else if (hoursSince > 48) {
+              violation++;
+            } else if (hoursSince > 24) {
+              warning++;
+            } else {
+              compliant++;
+            }
+            
+            if (ticket.escalated) escalated++;
+          });
+          
+          document.getElementById('slaCompliant').textContent = compliant;
+          document.getElementById('slaWarning').textContent = warning;
+          document.getElementById('slaViolation').textContent = violation;
+          document.getElementById('autoEscalated').textContent = escalated;
+        }
+      } catch (err) {
+        console.error('Failed to refresh SLA data:', err);
+      }
+    }
+
+    // HR Portal functions
+    async function refreshHRData() {
+      try {
+        const [tickets, access, onboarding] = await Promise.all([
+          fetch('/api/tickets', { credentials: 'include' }).then(r => r.json()),
+          fetch('/api/access-requests', { credentials: 'include' }).then(r => r.json()),
+          fetch('/api/onboarding', { credentials: 'include' }).then(r => r.json())
+        ]);
+
+        // Update HR stats
+        if (tickets.success) {
+          const stats = {
+            total: tickets.tickets.length,
+            open: tickets.tickets.filter(t => t.status === 'open').length,
+            resolved: tickets.tickets.filter(t => t.status === 'resolved').length,
+            avgResolutionTime: '2.3 days'
+          };
+          document.getElementById('hrTicketStats').innerHTML = `
+            <p>Total: ${stats.total}</p>
+            <p>Open: ${stats.open}</p>
+            <p>Resolved: ${stats.resolved}</p>
+            <p>Avg Resolution: ${stats.avgResolutionTime}</p>
+          `;
+        }
+
+        if (access.success) {
+          const stats = {
+            total: access.requests.length,
+            pending: access.requests.filter(r => r.status === 'pending').length,
+            approved: access.requests.filter(r => r.status === 'approved').length,
+            autoApproved: access.requests.filter(r => r.auto_approved).length
+          };
+          document.getElementById('hrAccessStats').innerHTML = `
+            <p>Total: ${stats.total}</p>
+            <p>Pending: ${stats.pending}</p>
+            <p>Approved: ${stats.approved}</p>
+            <p>Auto-Approved: ${stats.autoApproved}</p>
+          `;
+        }
+
+        if (onboarding.success) {
+          const stats = {
+            total: onboarding.checklists.length,
+            active: onboarding.checklists.filter(c => c.status !== 'completed').length,
+            completed: onboarding.checklists.filter(c => c.status === 'completed').length
+          };
+          document.getElementById('hrOnboardingStats').innerHTML = `
+            <p>Total: ${stats.total}</p>
+            <p>Active: ${stats.active}</p>
+            <p>Completed: ${stats.completed}</p>
+          `;
+        }
+
+        showNotification('HR data refreshed successfully', 'success');
+      } catch (err) {
+        console.error('Failed to refresh HR data:', err);
+        showNotification('Failed to refresh HR data', 'error');
+      }
+    }
+
+    // Load data functions
+    async function loadTickets() {
+      try {
+        const res = await fetch('/api/tickets', { credentials: 'include' });
+        const data = await res.json();
+        
+        const ticketsDiv = document.getElementById('ticketsList');
+        if (!ticketsDiv) return;
+        
+        if (data.success && data.tickets) {
+          let html = '';
+          data.tickets.forEach(ticket => {
+            const priorityColor = {
+              urgent: 'var(--danger)',
+              high: 'var(--warning)', 
+              medium: 'var(--primary)',
+              low: 'var(--secondary)'
+            }[ticket.priority] || 'var(--secondary)';
+            
+            html += `
+              <div class="agent-card">
+                <div style="display: flex; justify-content: space-between; align-items: start;">
+                  <div>
+                    <h4>${ticket.title}</h4>
+                    <p style="color: var(--secondary); margin: 0.5rem 0;">${ticket.description}</p>
+                    <div style="display: flex; gap: 1rem; font-size: 0.9rem;">
+                      <span><strong>Priority:</strong> <span style="color: ${priorityColor};">${ticket.priority}</span></span>
+                      <span><strong>Status:</strong> ${ticket.status}</span>
+                      <span><strong>Category:</strong> ${ticket.category || 'General'}</span>
+                    </div>
+                  </div>
+                  <span style="background: ${priorityColor}20; color: ${priorityColor}; padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.8rem;">
+                    #${ticket.id}
+                  </span>
+                </div>
+              </div>
+            `;
+          });
+          ticketsDiv.innerHTML = html || '<p>No tickets found</p>';
+        } else {
+          ticketsDiv.innerHTML = '<p>Failed to load tickets</p>';
+        }
+      } catch (err) {
+        console.error('Failed to load tickets:', err);
+        const ticketsDiv = document.getElementById('ticketsList');
+        if (ticketsDiv) ticketsDiv.innerHTML = '<p>Error loading tickets</p>';
+      }
+    }
+
+    async function loadAccessRequests() {
+      try {
+        const res = await fetch('/api/access-requests', { credentials: 'include' });
+        const data = await res.json();
+        
+        const accessDiv = document.getElementById('accessList');
+        if (!accessDiv) return;
+        
+        if (data.success && data.requests) {
+          let html = '';
+          data.requests.forEach(request => {
+            const statusColor = {
+              approved: 'var(--success)',
+              pending: 'var(--warning)',
+              denied: 'var(--danger)'
+            }[request.status] || 'var(--secondary)';
+            
+            html += `
+              <div class="agent-card">
+                <div style="display: flex; justify-content: space-between; align-items: start;">
+                  <div>
+                    <h4>${request.resource_name}</h4>
+                    <p style="color: var(--secondary); margin: 0.5rem 0;">${request.justification || request.reason || 'No reason provided'}</p>
+                    <div style="display: flex; gap: 1rem; font-size: 0.9rem;">
+                      <span><strong>Status:</strong> <span style="color: ${statusColor};">${request.status}</span></span>
+                      <span><strong>Type:</strong> ${request.access_type || 'read'}</span>
+                      ${request.auto_approved ? '<span style="color: var(--success);"><i class="fas fa-robot"></i> Auto-approved</span>' : ''}
+                    </div>
+                  </div>
+                  <span style="background: ${statusColor}20; color: ${statusColor}; padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.8rem;">
+                    #${request.id}
+                  </span>
+                </div>
+              </div>
+            `;
+          });
+          accessDiv.innerHTML = html || '<p>No access requests found</p>';
+        } else {
+          accessDiv.innerHTML = '<p>Failed to load access requests</p>';
+        }
+      } catch (err) {
+        console.error('Failed to load access requests:', err);
+        const accessDiv = document.getElementById('accessList');
+        if (accessDiv) accessDiv.innerHTML = '<p>Error loading access requests</p>';
+      }
+    }
+
+    async function loadOnboarding() {
+      try {
+        const res = await fetch('/api/onboarding', { credentials: 'include' });
+        const data = await res.json();
+        
+        const onboardingDiv = document.getElementById('onboardingList');
+        if (!onboardingDiv) return;
+        
+        if (data.success && data.checklists) {
+          let html = '';
+          data.checklists.forEach(checklist => {
+            const statusColor = {
+              completed: 'var(--success)',
+              pending: 'var(--warning)',
+              in_progress: 'var(--primary)'
+            }[checklist.status] || 'var(--secondary)';
+            
+            const items = checklist.checklist_items || [];
+            const completedItems = items.filter(item => item.completed).length;
+            
+            html += `
+              <div class="agent-card">
+                <div style="display: flex; justify-content: space-between; align-items: start;">
+                  <div style="flex: 1;">
+                    <h4>${checklist.employee_name}</h4>
+                    <p style="color: var(--secondary); margin: 0.5rem 0;">${checklist.role}</p>
+                    <div style="display: flex; gap: 1rem; font-size: 0.9rem; margin-bottom: 1rem;">
+                      <span><strong>Status:</strong> <span style="color: ${statusColor};">${checklist.status}</span></span>
+                      <span><strong>Progress:</strong> ${completedItems}/${items.length} items</span>
+                    </div>
+                    ${items.length > 0 ? `
+                      <div style="margin-top: 1rem;">
+                        <h5>Checklist Items:</h5>
+                        <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                          ${items.slice(0, 3).map(item => `
+                            <li style="color: ${item.completed ? 'var(--success)' : 'var(--secondary)'};">
+                              ${item.completed ? '<i class="fas fa-check"></i>' : '<i class="fas fa-circle"></i>'} ${item.task || item}
+                            </li>
+                          `).join('')}
+                          ${items.length > 3 ? `<li style="color: var(--secondary);"><em>... and ${items.length - 3} more items</em></li>` : ''}
+                        </ul>
+                      </div>
+                    ` : ''}
+                  </div>
+                  <span style="background: ${statusColor}20; color: ${statusColor}; padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.8rem;">
+                    #${checklist.id}
+                  </span>
+                </div>
+              </div>
+            `;
+          });
+          onboardingDiv.innerHTML = html || '<p>No onboarding checklists found</p>';
+        } else {
+          onboardingDiv.innerHTML = '<p>Failed to load onboarding checklists</p>';
+        }
+      } catch (err) {
+        console.error('Failed to load onboarding:', err);
+        const onboardingDiv = document.getElementById('onboarding');
+        if (onboardingDiv) onboardingDiv.innerHTML = '<p>Error loading onboarding</p>';
+      }
+    }
+
+    // Notification system
+    function showNotification(message, type = 'info') {
+      const notification = document.createElement('div');
+      notification.className = `notification ${type}`;
+      notification.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : 'info-circle'}"></i>
+          <span>${message}</span>
+        </div>
+      `;
+
+      document.getElementById('notificationContainer').appendChild(notification);
+      
+      setTimeout(() => notification.classList.add('show'), 100);
+      setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 300);
+      }, 3000);
+    }
+
+    // Create/show functions
+    function showCreateTicket() {
+      console.log('Show create ticket modal');
+    }
+
+    function showCreateAccess() {
+      console.log('Show create access modal');
+    }
+
+    function showCreateOnboarding() {
+      console.log('Show create onboarding modal');
+    }
   </script>
 </body>
 </html>

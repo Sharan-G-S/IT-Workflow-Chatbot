@@ -526,7 +526,362 @@ app.post('/api/intent/detect', requireAuth, (req, res) => {
   }
 });
 
-app.listen(port, () => console.log('Server running on', port));
+// ============ ADVANCED AUTOMATION FEATURES ============
+
+// Auto Ticket Generation with AI Analysis
+app.post('/api/tickets/auto-generate', requireAuth, async (req, res) => {
+  const { description, title } = req.body;
+  if (!description) return res.status(400).json({ error: 'Description required' });
+  
+  try {
+    // AI-powered categorization and priority detection
+    const category = autoDetectCategory(description);
+    const priority = autoDetectPriority(description);
+    const assignee = await autoAssignTicket(category, priority);
+    
+    const ticket = {
+      id: Date.now(),
+      title: title || `Auto-generated: ${description.substring(0, 50)}...`,
+      description,
+      category,
+      priority,
+      assignee,
+      status: 'open',
+      auto_generated: true,
+      created_at: new Date().toISOString(),
+      sla_due: calculateSLADueDate(priority)
+    };
+    
+    // Store ticket using existing service
+    const result = await ticketService.createTicket(ticket);
+    
+    // Log auto-generation
+    console.log(`[AUTO-TICKET] Generated ticket #${ticket.id} - Category: ${category}, Priority: ${priority}`);
+    
+    res.json({ success: true, ticket, message: 'Ticket auto-generated successfully' });
+  } catch (err) {
+    console.error('Auto ticket generation error:', err);
+    res.status(500).json({ error: 'Failed to auto-generate ticket' });
+  }
+});
+
+// Low-Risk Access Auto-Approval
+app.post('/api/access/auto-approve', requireAuth, async (req, res) => {
+  const { resource, reason } = req.body;
+  if (!resource) return res.status(400).json({ error: 'Resource required' });
+  
+  try {
+    const riskLevel = assessAccessRisk(resource);
+    const isLowRisk = riskLevel === 'low';
+    
+    const accessRequest = {
+      id: Date.now(),
+      user_id: req.session.userId,
+      resource,
+      reason: reason || 'Auto-approval for low-risk resource',
+      status: isLowRisk ? 'approved' : 'pending',
+      auto_approved: isLowRisk,
+      risk_level: riskLevel,
+      created_at: new Date().toISOString(),
+      approved_at: isLowRisk ? new Date().toISOString() : null,
+      approval_reason: isLowRisk ? 'Automatic approval - Low risk resource' : null
+    };
+    
+    // Store using existing service
+    const result = await accessRequestService.createRequest(accessRequest);
+    
+    // Log auto-approval
+    if (isLowRisk) {
+      console.log(`[AUTO-APPROVAL] Access granted to ${resource} for user ${req.session.userId} - Risk: ${riskLevel}`);
+    }
+    
+    res.json({ 
+      success: true, 
+      request: accessRequest, 
+      auto_approved: isLowRisk,
+      message: isLowRisk ? 'Access automatically approved - Low risk resource' : 'Access request submitted for review'
+    });
+  } catch (err) {
+    console.error('Auto approval error:', err);
+    res.status(500).json({ error: 'Failed to process access request' });
+  }
+});
+
+// SLA Monitoring & Auto-Escalation
+app.get('/api/sla/monitor', requireAuth, async (req, res) => {
+  try {
+    const tickets = await ticketService.getAllTickets();
+    const slaStatus = {
+      compliant: [],
+      warning: [],
+      violated: [],
+      escalated: []
+    };
+    
+    tickets.forEach(ticket => {
+      if (ticket.status === 'resolved') {
+        slaStatus.compliant.push(ticket);
+        return;
+      }
+      
+      const created = new Date(ticket.created_at);
+      const now = new Date();
+      const hoursSince = (now - created) / (1000 * 60 * 60);
+      
+      const slaThreshold = getSLAThreshold(ticket.priority);
+      const warningThreshold = slaThreshold * 0.8;
+      
+      if (hoursSince > slaThreshold) {
+        slaStatus.violated.push({
+          ...ticket,
+          hours_overdue: Math.round(hoursSince - slaThreshold)
+        });
+        
+        // Auto-escalate if not already escalated
+        if (!ticket.escalated) {
+          escalateTicket(ticket.id);
+          slaStatus.escalated.push(ticket);
+        }
+      } else if (hoursSince > warningThreshold) {
+        slaStatus.warning.push({
+          ...ticket,
+          hours_remaining: Math.round(slaThreshold - hoursSince)
+        });
+      } else {
+        slaStatus.compliant.push(ticket);
+      }
+    });
+    
+    res.json({ success: true, sla_status: slaStatus });
+  } catch (err) {
+    console.error('SLA monitoring error:', err);
+    res.status(500).json({ error: 'Failed to monitor SLA' });
+  }
+});
+
+// Onboarding Cadence Reminders
+app.get('/api/onboarding/reminders', requireAuth, async (req, res) => {
+  try {
+    const checklists = await onboardingService.getAllChecklists();
+    const reminders = {
+      overdue: [],
+      due_today: [],
+      due_soon: []
+    };
+    
+    checklists.forEach(checklist => {
+      if (checklist.status === 'completed') return;
+      
+      const items = checklist.checklist_items || [];
+      items.forEach(item => {
+        if (item.completed) return;
+        
+        const dueDate = new Date(item.due_date);
+        const today = new Date();
+        const daysDiff = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+        
+        const reminderItem = {
+          checklist_id: checklist.id,
+          employee_name: checklist.employee_name,
+          role: checklist.role,
+          item: item.task,
+          due_date: item.due_date,
+          days_diff: daysDiff
+        };
+        
+        if (daysDiff < 0) {
+          reminders.overdue.push(reminderItem);
+        } else if (daysDiff === 0) {
+          reminders.due_today.push(reminderItem);
+        } else if (daysDiff <= 3) {
+          reminders.due_soon.push(reminderItem);
+        }
+      });
+    });
+    
+    // Send notifications for overdue and due today items
+    if (reminders.overdue.length > 0 || reminders.due_today.length > 0) {
+      sendOnboardingReminders(reminders);
+    }
+    
+    res.json({ success: true, reminders });
+  } catch (err) {
+    console.error('Onboarding reminders error:', err);
+    res.status(500).json({ error: 'Failed to get reminders' });
+  }
+});
+
+// Auto-escalation endpoint
+app.post('/api/tickets/:id/escalate', requireAuth, async (req, res) => {
+  const ticketId = parseInt(req.params.id);
+  
+  try {
+    const result = await escalateTicket(ticketId);
+    if (result.success) {
+      console.log(`[AUTO-ESCALATION] Ticket #${ticketId} escalated due to SLA violation`);
+      res.json({ success: true, message: 'Ticket escalated successfully' });
+    } else {
+      res.status(404).json({ error: 'Ticket not found' });
+    }
+  } catch (err) {
+    console.error('Escalation error:', err);
+    res.status(500).json({ error: 'Failed to escalate ticket' });
+  }
+});
+
+// ============ AUTOMATION HELPER FUNCTIONS ============
+
+function autoDetectCategory(description) {
+  const text = description.toLowerCase();
+  
+  if (text.includes('password') || text.includes('login') || text.includes('access')) {
+    return 'Access & Authentication';
+  }
+  if (text.includes('hardware') || text.includes('laptop') || text.includes('computer')) {
+    return 'Hardware';
+  }
+  if (text.includes('software') || text.includes('application') || text.includes('app')) {
+    return 'Software';
+  }
+  if (text.includes('network') || text.includes('internet') || text.includes('wifi')) {
+    return 'Network';
+  }
+  if (text.includes('email') || text.includes('outlook') || text.includes('mail')) {
+    return 'Email & Communication';
+  }
+  
+  return 'General IT Support';
+}
+
+function autoDetectPriority(description) {
+  const text = description.toLowerCase();
+  const urgentWords = ['urgent', 'critical', 'emergency', 'down', 'broken', 'immediately'];
+  const highWords = ['important', 'asap', 'soon', 'blocking', 'cannot work'];
+  
+  if (urgentWords.some(word => text.includes(word))) {
+    return 'urgent';
+  }
+  if (highWords.some(word => text.includes(word))) {
+    return 'high';
+  }
+  
+  return 'medium';
+}
+
+async function autoAssignTicket(category, priority) {
+  // Simple assignment based on category
+  const assignments = {
+    'Access & Authentication': 'security-team@company.com',
+    'Hardware': 'hardware-support@company.com',
+    'Software': 'software-support@company.com',
+    'Network': 'network-team@company.com',
+    'Email & Communication': 'email-support@company.com'
+  };
+  
+  return assignments[category] || 'it-support@company.com';
+}
+
+function assessAccessRisk(resource) {
+  const lowRiskResources = [
+    'figma', 'canva', 'notion', 'slack', 'zoom', 'teams', 
+    'office365', 'google workspace', 'confluence', 'jira',
+    'trello', 'asana', 'monday.com'
+  ];
+  
+  const highRiskResources = [
+    'aws', 'azure', 'gcp', 'production', 'database',
+    'admin', 'root', 'billing', 'payroll', 'financial'
+  ];
+  
+  const resourceLower = resource.toLowerCase();
+  
+  if (lowRiskResources.some(r => resourceLower.includes(r))) {
+    return 'low';
+  }
+  if (highRiskResources.some(r => resourceLower.includes(r))) {
+    return 'high';
+  }
+  
+  return 'medium';
+}
+
+function getSLAThreshold(priority) {
+  const thresholds = {
+    'urgent': 4,    // 4 hours
+    'high': 24,     // 24 hours
+    'medium': 48,   // 48 hours
+    'low': 72       // 72 hours
+  };
+  
+  return thresholds[priority] || 48;
+}
+
+function calculateSLADueDate(priority) {
+  const hours = getSLAThreshold(priority);
+  const dueDate = new Date();
+  dueDate.setHours(dueDate.getHours() + hours);
+  return dueDate.toISOString();
+}
+
+async function escalateTicket(ticketId) {
+  try {
+    const result = await ticketService.escalateTicket(ticketId);
+    
+    if (result.success) {
+      // Send escalation notification
+      sendEscalationNotification(result.ticket);
+    }
+    
+    return result;
+  } catch (err) {
+    console.error('Escalation error:', err);
+    return { success: false, error: err.message };
+  }
+}
+
+function sendOnboardingReminders(reminders) {
+  // In a real implementation, this would send emails/notifications
+  console.log('[ONBOARDING-REMINDERS]', {
+    overdue: reminders.overdue.length,
+    due_today: reminders.due_today.length,
+    due_soon: reminders.due_soon.length
+  });
+  
+  // Use existing notification service
+  if (notificationService) {
+    reminders.overdue.forEach(item => {
+      notificationService.sendNotification({
+        type: 'onboarding_overdue',
+        message: `Onboarding task overdue: ${item.item} for ${item.employee_name}`,
+        employee: item.employee_name
+      });
+    });
+  }
+}
+
+function sendEscalationNotification(ticket) {
+  // In a real implementation, this would send emails/notifications
+  console.log(`[ESCALATION-NOTIFICATION] Ticket #${ticket.id} escalated - ${ticket.title}`);
+  
+  // Use existing notification service
+  if (notificationService) {
+    notificationService.sendNotification({
+      type: 'ticket_escalated',
+      ticket_id: ticket.id,
+      message: `Ticket #${ticket.id} has been escalated due to SLA violation`,
+      priority: 'urgent'
+    });
+  }
+}
+
+app.listen(port, () => {
+  console.log('Server running on', port);
+  console.log('[AUTOMATION] Advanced features enabled:');
+  console.log('  ✓ Auto Ticket Generation');
+  console.log('  ✓ Low-Risk Access Auto-Approval');
+  console.log('  ✓ SLA Monitoring & Escalation');
+  console.log('  ✓ Onboarding Cadence Reminders');
+});
 
 // ============ LANGCHAIN AGENT ENDPOINTS ============
 app.post('/api/agents/orchestrate', requireAuth, async (req, res) => {
@@ -551,10 +906,10 @@ app.post('/api/agents/orchestrate', requireAuth, async (req, res) => {
       success: result.success,
       message,
       routing: result.routing,
+      response: result.primaryResult || result.results?.[0]?.response || 'No response generated',
       results: result.results,
       executionTime: result.executionTime,
-      agentsUsed: result.agentsUsed,
-      primaryResult: result.primaryResult
+      agentsUsed: result.agentsUsed
     });
   } catch (err) {
     console.error('agent orchestration error', err);
@@ -569,10 +924,10 @@ app.get('/api/agents/analytics', requireAuth, (req, res) => {
   
   try {
     const analytics = agentRouter.getRoutingAnalytics();
-    res.json({ analytics });
+    res.json({ success: true, analytics });
   } catch (err) {
     console.error('agent analytics error', err);
-    res.status(500).json({ error: String(err) });
+    res.status(500).json({ success: false, error: String(err) });
   }
 });
 

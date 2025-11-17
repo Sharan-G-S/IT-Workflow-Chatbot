@@ -33,6 +33,30 @@ class AccessRequestService {
     const stmt = db.prepare('UPDATE access_requests SET status = ?, approver = ?, resolved_at = CURRENT_TIMESTAMP WHERE id = ?');
     return stmt.run(status, approver, requestId);
   }
+
+  createRequest(requestData) {
+    try {
+      const stmt = db.prepare(`
+        INSERT INTO access_requests (user_id, resource_name, access_type, justification, status, created_at, resolved_at, approver)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      
+      const result = stmt.run(
+        requestData.user_id,
+        requestData.resource,
+        requestData.access_type || 'read',
+        requestData.reason || requestData.justification || '',
+        requestData.status || 'pending',
+        requestData.created_at || new Date().toISOString(),
+        requestData.approved_at || null,
+        requestData.approval_reason || null
+      );
+      
+      return { success: true, id: result.lastInsertRowid };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  }
 }
 
 module.exports = new AccessRequestService();
