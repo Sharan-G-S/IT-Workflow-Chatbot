@@ -553,6 +553,6 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ---
 
-**Built with ❤️ by [Sharan G S](https://github.com/Sharan-G-S)**
+**Built with ❤️ by [ Team-2 ](https://github.com/Sharan-G-S)**
 
 *Empowering IT teams with intelligent automation and conversational AI.*
